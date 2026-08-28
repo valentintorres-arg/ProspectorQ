@@ -1,0 +1,42 @@
+PROSPECTOR - PROXIMOS PASOS
+(actualizado 2026-08-28)
+
+PENDIENTE INMEDIATO
+--------------------
+1. Configurar Supabase real en .env.local:
+   - Crear proyecto en supabase.com
+   - Correr supabase/migrations/0001_init.sql en el SQL Editor (habilita
+     PostGIS y crea las tablas zonas, negocios, leads, interacciones)
+   - Completar NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY y
+     SUPABASE_SERVICE_ROLE_KEY en .env.local
+   - Sin esto, /mapa dibuja zonas y busca en Overpass bien, pero falla al
+     guardar (insert_zona) y /pipeline no puede leer leads.
+
+2. (Opcional) Google Places API para "Enriquecer con Google":
+   - Solo si querés completar telefono/web/rating de los negocios
+   - Completar GOOGLE_MAPS_SERVER_API_KEY en .env.local (ver README)
+
+YA RESUELTO EN ESTA SESION
+---------------------------
+- Proyecto migrado de npm a pnpm (pnpm-lock.yaml)
+- Lint (eslint-plugin-react-hooks 7) y build limpios
+- GET/PATCH/DELETE de /api/leads ahora manejan errores con try/catch
+  (antes tiraban un 500 sin body y rompian el fetch del cliente)
+- Mapa migrado de Google Maps a Leaflet + tiles de OpenStreetMap (sin API key)
+- Fix: los botones flotantes del mapa (Dibujar zona, etc.) no se veian
+  porque los panes de Leaflet tienen z-index alto y tapaban los overlays
+  -> se les agrego z-[1000]
+- Fix: Overpass devolvia 406 porque el fetch de Node no manda User-Agent
+  por default -> se agrego un User-Agent explicito en /api/search-zone
+
+QUE FALTA PARA PRODUCCION (del README, todavia sin hacer)
+------------------------------------------------------------
+- Auth (Supabase Auth) - hoy cualquiera con la URL puede usar la app
+- RLS (Row Level Security) en las tablas - hoy todo el acceso es via
+  service_role key sin restricciones a nivel fila
+- Rate limiting propio en /api/search-zone para no abusar de Overpass
+  (API publica compartida, puede banear temporalmente)
+- Manejo de duplicados mas fino (hoy dedupea por osm_id/google_place_id
+  exactos, no por proximidad/nombre similar entre fuentes distintas)
+- Pagina de detalle de lead (/leads/[id]) con historial de interacciones
+  - la tabla interacciones ya existe en el schema pero no tiene UI
