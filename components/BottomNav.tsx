@@ -21,17 +21,27 @@ export default function BottomNav() {
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-col items-center gap-0.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
-              active ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant'
-            }`}
+            className="flex flex-col items-center gap-1 px-3 py-1.5 active:scale-95"
           >
             <span
-              className="material-symbols-outlined text-[22px]"
-              style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              className={`flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-150 ${
+                active ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant'
+              }`}
             >
-              {item.icon}
+              <span
+                className="material-symbols-outlined text-[20px]"
+                style={active ? { fontVariationSettings: "'FILL' 1" } : undefined}
+              >
+                {item.icon}
+              </span>
             </span>
-            <span className="font-label">{item.label}</span>
+            <span
+              className={`font-label text-[11px] transition-colors duration-150 ${
+                active ? 'font-semibold text-primary' : 'text-on-surface-variant'
+              }`}
+            >
+              {item.label}
+            </span>
           </Link>
         );
       })}

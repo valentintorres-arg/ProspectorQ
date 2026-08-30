@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { traducirRubro } from '@/lib/rubros';
 import type { Negocio } from '@/lib/types';
 
 // Leaflet toca el DOM directamente, así que no puede renderizarse en el servidor.
@@ -231,7 +232,7 @@ function MapaContent() {
                 <option value="">Todos los rubros</option>
                 {rubros.map((r) => (
                   <option key={r} value={r}>
-                    {r}
+                    {traducirRubro(r)}
                   </option>
                 ))}
               </select>
@@ -310,7 +311,7 @@ function MapaContent() {
                     <div>
                       <p className="font-title text-sm font-semibold text-on-surface">{negocio.nombre}</p>
                       {negocio.rubro && (
-                        <p className="font-label mt-1 text-xs text-on-surface-variant">{negocio.rubro}</p>
+                        <p className="font-label mt-1 text-xs text-on-surface-variant">{traducirRubro(negocio.rubro)}</p>
                       )}
                       {negocio.direccion && (
                         <p className="font-label mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Skeleton from '@/components/Skeleton';
+import { traducirRubro } from '@/lib/rubros';
 
 interface DashboardData {
   zonasCount: number;
@@ -51,7 +53,42 @@ export default function DashboardPage() {
   }, []);
 
   if (error) return <div className="p-6 text-sm text-error">{error}</div>;
-  if (!data) return <div className="p-6 text-sm text-on-surface-variant">Cargando métricas…</div>;
+
+  if (!data) {
+    return (
+      <div className="p-4 sm:p-6">
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="mt-2 mb-6 h-4 w-72" />
+
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-4">
+              <Skeleton className="mb-3 h-10 w-10 rounded-md" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="mt-2 h-7 w-14" />
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+              <Skeleton className="mb-4 h-4 w-40" />
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, j) => (
+                  <div key={j} className="flex items-center gap-3">
+                    <Skeleton className="h-3 w-24 sm:w-40" />
+                    <Skeleton className="h-3 flex-1 rounded-full" />
+                    <Skeleton className="h-3 w-8" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const maxEtapa = Math.max(...data.porEtapa.map((e) => e.count), 1);
   const maxRubro = Math.max(...data.porRubro.map((r) => r.count), 1);
@@ -105,7 +142,7 @@ export default function DashboardPage() {
           )}
           <div className="space-y-3">
             {data.porRubro.map((r) => (
-              <BarRow key={r.rubro} label={r.rubro} count={r.count} max={maxRubro} />
+              <BarRow key={r.rubro} label={traducirRubro(r.rubro)} count={r.count} max={maxRubro} />
             ))}
           </div>
         </div>

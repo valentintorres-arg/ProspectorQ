@@ -197,9 +197,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
       <div ref={mapDivRef} className="h-full w-full rounded-xl border border-outline-variant/20" />
 
       {!ready && (
-        <div className="absolute inset-0 z-[1000] flex items-center justify-center rounded-xl bg-surface/60 text-sm text-on-surface-variant">
-          Cargando mapa…
-        </div>
+        <div className="absolute inset-0 z-[1000] animate-pulse rounded-xl bg-surface-container-highest" />
       )}
 
       {ready && (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Skeleton from '@/components/Skeleton';
 import type { Zona } from '@/lib/types';
 
 export default function ZonasPage() {
@@ -26,8 +27,33 @@ export default function ZonasPage() {
     cargar();
   }, []);
 
-  if (loading) return <div className="p-6 text-sm text-on-surface-variant">Cargando zonas…</div>;
   if (error) return <div className="p-6 text-sm text-error">{error}</div>;
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-9 w-32 rounded-xl" />
+        </div>
+        <Skeleton className="mt-2 mb-6 h-4 w-80" />
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+              <div className="mb-1 flex items-start justify-between gap-2">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-4 w-14 rounded-full" />
+              </div>
+              <Skeleton className="mt-2 h-3 w-36" />
+              <Skeleton className="mt-4 h-8 w-40" />
+              <Skeleton className="mt-4 h-9 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6">

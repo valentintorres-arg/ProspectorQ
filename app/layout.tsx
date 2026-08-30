@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Hanken_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { getUser } from "@/lib/supabase/auth-server";
-import Sidebar from "@/components/Sidebar";
-import TopBar from "@/components/TopBar";
-import BottomNav from "@/components/BottomNav";
+import AppShell from "@/components/AppShell";
 
 const geist = Geist({ subsets: ["latin"], weight: "variable", variable: "--font-geist" });
 const hankenGrotesk = Hanken_Grotesk({
@@ -55,14 +53,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </main>
         ) : (
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar email={user.email ?? ''} />
-            <div className="flex h-screen flex-1 flex-col overflow-hidden md:ml-64">
-              <TopBar email={user.email ?? ''} />
-              <main className="flex-1 overflow-y-auto md:overflow-hidden">{children}</main>
-              <BottomNav />
-            </div>
-          </div>
+          <AppShell email={user.email ?? ''}>{children}</AppShell>
         )}
       </body>
     </html>

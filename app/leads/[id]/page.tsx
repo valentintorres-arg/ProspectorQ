@@ -2,6 +2,8 @@
 
 import { use, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import Skeleton from '@/components/Skeleton';
+import { traducirRubro } from '@/lib/rubros';
 import {
   ETAPAS,
   TIPOS_INTERACCION,
@@ -101,19 +103,75 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (loading) return <div className="p-6 text-sm text-on-surface-variant">Cargando…</div>;
   if (error && !lead) return <div className="p-6 text-sm text-error">{error}</div>;
-  if (!lead) return null;
+
+  if (loading || !lead) {
+    return (
+      <div className="w-full p-4 sm:p-6">
+        <Skeleton className="mb-4 h-5 w-36" />
+        <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+          <div className="space-y-4">
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+              <div className="mb-3 flex items-start justify-between gap-2">
+                <div className="flex-1">
+                  <Skeleton className="h-6 w-40" />
+                  <Skeleton className="mt-2 h-3 w-24" />
+                </div>
+                <Skeleton className="h-4 w-14 rounded-full" />
+              </div>
+              <Skeleton className="h-3 w-48" />
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Skeleton className="h-16 rounded-lg" />
+                <Skeleton className="h-16 rounded-lg" />
+              </div>
+            </div>
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+              <Skeleton className="mb-4 h-9 w-full rounded-md" />
+              <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Skeleton className="h-9 rounded-md" />
+                <Skeleton className="h-9 rounded-md" />
+              </div>
+              <Skeleton className="h-16 w-full rounded-md" />
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+              <div className="flex items-center gap-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-8 shrink-0 rounded-full" />
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+              <Skeleton className="mb-4 h-4 w-24" />
+              <Skeleton className="mb-4 h-9 w-full rounded-md" />
+              <div className="space-y-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex gap-3">
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                    <Skeleton className="h-14 flex-1 rounded-xl" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const etapaIdx = ETAPAS.findIndex((e) => e.value === lead.etapa);
 
   return (
-    <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
+    <div className="w-full p-4 sm:p-6">
       <Link
         href="/pipeline"
-        className="font-label mb-4 flex w-fit items-center gap-1 text-sm text-primary hover:underline"
+        className="font-label group mb-4 flex w-fit items-center gap-0.5 rounded-full py-1 pl-1 pr-3 text-sm text-on-surface-variant transition-colors duration-150 hover:bg-surface-container-highest hover:text-primary"
       >
-        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+        <span className="material-symbols-outlined text-[20px] transition-transform duration-150 group-hover:-translate-x-0.5">
+          chevron_left
+        </span>
         Volver al pipeline
       </Link>
 
@@ -129,7 +187,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <div>
                 <h1 className="font-headline text-xl font-semibold text-on-surface">{lead.negocio?.nombre}</h1>
                 {lead.negocio?.rubro && (
-                  <p className="font-label mt-1 text-xs text-on-surface-variant">{lead.negocio.rubro}</p>
+                  <p className="font-label mt-1 text-xs text-on-surface-variant">{traducirRubro(lead.negocio.rubro)}</p>
                 )}
               </div>
               <span className="font-label shrink-0 rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase text-on-secondary-container">

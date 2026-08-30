@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Skeleton from '@/components/Skeleton';
+import { traducirRubro } from '@/lib/rubros';
 import { ETAPAS, type Etapa, type Lead } from '@/lib/types';
 
 function hoyISO() {
@@ -36,7 +38,7 @@ function exportarCSV(leads: Lead[]) {
   ];
   const filas = leads.map((l) => [
     l.negocio?.nombre ?? '',
-    l.negocio?.rubro ?? '',
+    traducirRubro(l.negocio?.rubro),
     l.negocio?.direccion ?? '',
     l.negocio?.telefono ?? '',
     l.negocio?.web ?? '',
@@ -113,12 +115,45 @@ export default function PipelinePage() {
     if (!q) return leads;
     return leads.filter(
       (l) =>
-        l.negocio?.nombre?.toLowerCase().includes(q) || l.negocio?.rubro?.toLowerCase().includes(q)
+        l.negocio?.nombre?.toLowerCase().includes(q) ||
+        l.negocio?.rubro?.toLowerCase().includes(q) ||
+        traducirRubro(l.negocio?.rubro).toLowerCase().includes(q)
     );
   }, [leads, busqueda]);
 
-  if (loading) return <div className="p-6 text-sm text-on-surface-variant">Cargando pipeline…</div>;
   if (error) return <div className="p-6 text-sm text-error">{error}</div>;
+
+  if (loading) {
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <Skeleton className="h-8 w-32" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-9 w-full rounded-full sm:w-64" />
+            <Skeleton className="h-9 w-32 rounded-xl" />
+          </div>
+        </div>
+        <div className="flex gap-4 overflow-x-auto pb-4">
+          {ETAPAS.map((etapa) => (
+            <div key={etapa.value} className="w-72 shrink-0 rounded-xl bg-surface-container-low/50 p-2">
+              <div className="mb-2 flex items-center justify-between px-2 py-1">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-6 rounded-full" />
+              </div>
+              <div className="space-y-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-3">
+                    <Skeleton className="mb-2 h-4 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 sm:p-6">
@@ -192,7 +227,7 @@ export default function PipelinePage() {
                     >
                       {lead.negocio?.rubro && (
                         <span className="font-label mb-1.5 inline-block rounded-full border border-outline-variant/20 bg-surface-container-highest px-2 py-0.5 text-[10px] text-on-surface-variant">
-                          {lead.negocio.rubro}
+                          {traducirRubro(lead.negocio.rubro)}
                         </span>
                       )}
                       <p className="font-title text-sm font-semibold text-on-surface">{lead.negocio?.nombre}</p>
