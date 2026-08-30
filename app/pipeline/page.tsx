@@ -62,6 +62,7 @@ export default function PipelinePage() {
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverEtapa, setDragOverEtapa] = useState<Etapa | null>(null);
   const [busqueda, setBusqueda] = useState('');
+  const [filtroRubro, setFiltroRubro] = useState('');
 
   async function cargarLeads() {
     try {
@@ -103,16 +104,23 @@ export default function PipelinePage() {
     setDragLeadId(null);
   }
 
+  const rubros = useMemo(
+    () => Array.from(new Set(leads.map((l) => l.negocio?.rubro).filter((r): r is string => !!r))).sort(),
+    [leads]
+  );
+
   const leadsFiltrados = useMemo(() => {
     const q = busqueda.trim().toLowerCase();
-    if (!q) return leads;
-    return leads.filter(
-      (l) =>
+    return leads.filter((l) => {
+      if (filtroRubro && l.negocio?.rubro !== filtroRubro) return false;
+      if (!q) return true;
+      return (
         l.negocio?.nombre?.toLowerCase().includes(q) ||
         l.negocio?.rubro?.toLowerCase().includes(q) ||
         traducirRubro(l.negocio?.rubro, lang).toLowerCase().includes(q)
-    );
-  }, [leads, busqueda, lang]);
+      );
+    });
+  }, [leads, busqueda, filtroRubro, lang]);
 
   if (error) return <div className="p-6 text-sm text-error">{error}</div>;
 
@@ -165,6 +173,18 @@ export default function PipelinePage() {
               className="w-full rounded-full border-0 bg-surface-container-low py-2 pl-9 pr-3 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
             />
           </div>
+          <select
+            value={filtroRubro}
+            onChange={(e) => setFiltroRubro(e.target.value)}
+            className="font-label rounded-full border border-outline-variant/20 bg-surface-container-low px-3 py-2 text-xs text-on-surface-variant"
+          >
+            <option value="">{t.pipeline.allCategories}</option>
+            {rubros.map((r) => (
+              <option key={r} value={r}>
+                {traducirRubro(r, lang)}
+              </option>
+            ))}
+          </select>
           <button
             onClick={() => exportarCSV(leadsFiltrados, t, lang)}
             disabled={leadsFiltrados.length === 0}

@@ -122,17 +122,24 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
       </div>
 
       <div className="flex flex-col gap-2 border-t border-outline-variant/10 pt-4">
-        {/* Switches: tarjeta propia, uno en cada punta en vez de amontonados
-            a la izquierda — se leen como una barra de preferencias, no como
-            dos controles sueltos. */}
-        <div
-          className={`flex items-center rounded-xl bg-surface-container-highest/50 p-2 ${
-            collapsed ? 'flex-col gap-3' : 'justify-between'
-          }`}
-        >
-          <LanguageToggle />
-          <ThemeToggle />
-        </div>
+        {collapsed ? (
+          // Colapsada no hay lugar para la tarjeta ovalada (el riel mide
+          // 80px, con el padding del nav quedan 48px de contenido — justo
+          // para dos switches de 44px apilados, pero no si además les suma
+          // padding una tarjeta propia). Van sueltos, uno arriba del otro.
+          <div className="flex flex-col items-center gap-2.5">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+        ) : (
+          // Expandida sí entran cómodos en una tarjeta con un switch en
+          // cada punta — se leen como una barra de preferencias, no como
+          // dos controles sueltos.
+          <div className="flex items-center justify-between rounded-xl bg-surface-container-highest/50 p-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
+        )}
 
         {/* Cuenta: el mail y "cerrar sesión" son un solo botón/unidad — al
             pasar el mouse todo el bloque se tiñe de error, dejando claro que

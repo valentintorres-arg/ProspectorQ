@@ -87,6 +87,7 @@ const en: Dictionary = {
   pipeline: {
     title: 'Pipeline',
     searchPlaceholder: 'Search by name or category…',
+    allCategories: 'All categories',
     exportCsv: 'Export CSV',
     dropHere: 'Drop a card here',
     overdue: 'Overdue',

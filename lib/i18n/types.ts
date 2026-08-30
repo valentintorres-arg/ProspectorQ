@@ -92,6 +92,7 @@ export interface Dictionary {
   pipeline: {
     title: string;
     searchPlaceholder: string;
+    allCategories: string;
     exportCsv: string;
     dropHere: string;
     overdue: string;
