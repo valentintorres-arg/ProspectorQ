@@ -8,11 +8,18 @@ export interface Frescura {
   stale: boolean;
 }
 
-export function formatearFrescura(fechaISO: string | null, lang: 'es' | 'en'): Frescura | null {
+// null = sin fecha, o reloj del cliente desincronizado/dato corrupto (fecha
+// futura) — en ambos casos mejor tratarlo como "no sabemos" que inventar un
+// número raro.
+export function diasDesdeVerificacion(fechaISO: string | null): number | null {
   if (!fechaISO) return null;
-
   const dias = Math.floor((Date.now() - new Date(fechaISO).getTime()) / (1000 * 60 * 60 * 24));
-  if (dias < 0) return null; // reloj del cliente desincronizado o dato corrupto: mejor no mostrar nada raro
+  return dias < 0 ? null : dias;
+}
+
+export function formatearFrescura(fechaISO: string | null, lang: 'es' | 'en'): Frescura | null {
+  const dias = diasDesdeVerificacion(fechaISO);
+  if (dias === null) return null;
 
   const stale = dias > UMBRAL_STALE_DIAS;
   const meses = Math.floor(dias / 30);

@@ -58,6 +58,10 @@ export interface Dictionary {
     reSearching: (name: string) => string;
     allCategories: string;
     onlyEnriched: string;
+    freshnessAny: string;
+    freshnessWeek: string;
+    freshnessMonth: string;
+    freshnessFilterHint: string;
     selectAll: (n: number) => string;
     enrichSelection: string;
     enriching: string;

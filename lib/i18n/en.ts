@@ -53,6 +53,11 @@ const en: Dictionary = {
     reSearching: (name) => `Searching again over "${name}".`,
     allCategories: 'All categories',
     onlyEnriched: 'Enriched only',
+    freshnessAny: 'Verified: any time',
+    freshnessWeek: 'Verified in the last week',
+    freshnessMonth: 'Verified in the last month',
+    freshnessFilterHint:
+      "Based on when the data source last updated the record, not on whether anyone confirmed in person that the business is still open.",
     selectAll: (n) => `Select all (${n})`,
     enrichSelection: 'Enrich selection',
     enriching: 'Enriching…',

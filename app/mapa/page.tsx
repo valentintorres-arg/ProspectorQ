@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { traducirRubro } from '@/lib/rubros';
-import { formatearFrescura } from '@/lib/freshness';
+import { formatearFrescura, diasDesdeVerificacion } from '@/lib/freshness';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import type { Negocio } from '@/lib/types';
 
@@ -27,6 +27,8 @@ function MapaContent() {
 
   const [filtroRubro, setFiltroRubro] = useState('');
   const [soloEnriquecidos, setSoloEnriquecidos] = useState(false);
+  // '' = todos, o un número de días (7/30) — "verificado hace <= N días"
+  const [filtroFrescura, setFiltroFrescura] = useState('');
 
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
   const [bulkEnriqueciendo, setBulkEnriqueciendo] = useState(false);
@@ -193,9 +195,15 @@ function MapaContent() {
       resultados.filter((n) => {
         if (filtroRubro && n.rubro !== filtroRubro) return false;
         if (soloEnriquecidos && !n.enriquecido) return false;
+        if (filtroFrescura) {
+          const dias = diasDesdeVerificacion(n.ultima_actualizacion);
+          // Sin fecha de verificación = no podemos afirmar que esté al día,
+          // así que lo sacamos del filtro (no lo dejamos pasar "por las dudas").
+          if (dias === null || dias > Number(filtroFrescura)) return false;
+        }
         return true;
       }),
-    [resultados, filtroRubro, soloEnriquecidos]
+    [resultados, filtroRubro, soloEnriquecidos, filtroFrescura]
   );
 
   return (
@@ -250,6 +258,16 @@ function MapaContent() {
                 />
                 {t.mapa.onlyEnriched}
               </label>
+              <select
+                value={filtroFrescura}
+                onChange={(e) => setFiltroFrescura(e.target.value)}
+                title={t.mapa.freshnessFilterHint}
+                className="font-label rounded-full border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-xs text-on-surface-variant"
+              >
+                <option value="">{t.mapa.freshnessAny}</option>
+                <option value="7">{t.mapa.freshnessWeek}</option>
+                <option value="30">{t.mapa.freshnessMonth}</option>
+              </select>
               <span className="font-mono text-xs text-on-surface-variant/70">
                 {resultadosFiltrados.length} / {resultados.length}
               </span>
