@@ -6,6 +6,7 @@ import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
+import Logo from './Logo';
 
 interface SidebarProps {
   email: string;
@@ -47,7 +48,7 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
           className="flex min-w-0 items-center gap-3 rounded-lg transition-transform duration-150 hover:scale-[1.03] active:scale-95"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-container">
-            <span className="material-symbols-outlined text-on-primary-container">radar</span>
+            <Logo className="h-6 w-6 text-on-primary-container" />
           </span>
           {!collapsed && (
             <span className="min-w-0 text-left">
@@ -121,35 +122,39 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
       </div>
 
       <div className="flex flex-col gap-2 border-t border-outline-variant/10 pt-4">
-        {!collapsed && (
-          <span
-            className="font-label truncate px-2 text-xs text-on-surface-variant"
-            title={email}
-          >
-            {email}
-          </span>
-        )}
-
-        <div className={`flex items-center gap-2 px-2 ${collapsed ? 'flex-col' : ''}`}>
+        {/* Switches: tarjeta propia, uno en cada punta en vez de amontonados
+            a la izquierda — se leen como una barra de preferencias, no como
+            dos controles sueltos. */}
+        <div
+          className={`flex items-center rounded-xl bg-surface-container-highest/50 p-2 ${
+            collapsed ? 'flex-col gap-3' : 'justify-between'
+          }`}
+        >
           <LanguageToggle />
           <ThemeToggle />
         </div>
 
+        {/* Cuenta: el mail y "cerrar sesión" son un solo botón/unidad — al
+            pasar el mouse todo el bloque se tiñe de error, dejando claro que
+            la acción cierra la sesión de ESE mail. */}
         <button
           onClick={handleLogout}
-          title={collapsed ? t.nav.logout : undefined}
-          className={`group flex items-center gap-3 rounded-lg py-1.5 text-left transition-colors duration-150 hover:bg-surface-container-highest/60 ${
-            collapsed ? 'justify-center px-0' : 'px-2'
+          title={collapsed ? `${email} — ${t.nav.logout}` : undefined}
+          className={`group flex items-center rounded-xl py-2 transition-colors duration-150 hover:bg-error-container/50 ${
+            collapsed ? 'justify-center px-0' : 'justify-between gap-2 px-2 text-left'
           }`}
         >
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors duration-150 group-hover:text-error">
-            <span className="material-symbols-outlined">logout</span>
-          </span>
           {!collapsed && (
-            <span className="font-label text-xs text-on-surface-variant transition-colors duration-150 group-hover:text-error">
-              {t.nav.logout}
+            <span
+              className="font-label min-w-0 truncate text-xs text-on-surface-variant transition-colors duration-150 group-hover:text-on-error-container"
+              title={email}
+            >
+              {email}
             </span>
           )}
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors duration-150 group-hover:text-on-error-container">
+            <span className="material-symbols-outlined text-[18px]">logout</span>
+          </span>
         </button>
       </div>
     </nav>

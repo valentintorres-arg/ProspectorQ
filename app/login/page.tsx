@@ -4,6 +4,7 @@ import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
+import Logo from '@/components/Logo';
 
 function LoginForm() {
   const router = useRouter();
@@ -40,7 +41,7 @@ function LoginForm() {
     >
       <div className="mb-6 flex flex-col items-center text-center">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-primary-container">
-          <span className="material-symbols-outlined text-[28px] text-on-primary-container">radar</span>
+          <Logo className="h-8 w-8 text-on-primary-container" />
         </div>
         <h1 className="font-headline text-2xl font-semibold text-primary">Prospector</h1>
         <p className="mt-1 text-sm text-on-surface-variant">{t.login.tagline}</p>
