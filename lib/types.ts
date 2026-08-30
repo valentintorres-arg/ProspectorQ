@@ -17,6 +17,13 @@ export const ETAPAS: { value: Etapa; label: string }[] = [
   { value: 'perdido', label: 'Perdido' },
 ];
 
+export interface Zona {
+  id: string;
+  nombre: string;
+  created_at: string;
+  negocios_count: number;
+}
+
 export interface Negocio {
   id: string;
   zona_id: string | null;
@@ -47,10 +54,20 @@ export interface Lead {
   negocio?: Negocio;
 }
 
+export type TipoInteraccion = 'nota' | 'llamada' | 'mail' | 'reunion' | 'whatsapp';
+
+export const TIPOS_INTERACCION: { value: TipoInteraccion; label: string }[] = [
+  { value: 'nota', label: 'Nota' },
+  { value: 'llamada', label: 'Llamada' },
+  { value: 'mail', label: 'Mail' },
+  { value: 'reunion', label: 'Reunión' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+];
+
 export interface Interaccion {
   id: string;
   lead_id: string;
-  tipo: 'nota' | 'llamada' | 'mail' | 'reunion' | 'whatsapp';
+  tipo: TipoInteraccion;
   descripcion: string;
   created_at: string;
 }

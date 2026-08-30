@@ -1,23 +1,87 @@
 PROSPECTOR - PROXIMOS PASOS
-(actualizado 2026-08-28)
+(actualizado 2026-08-29)
 
 PENDIENTE INMEDIATO
 --------------------
-1. Configurar Supabase real en .env.local:
-   - Crear proyecto en supabase.com
-   - Correr supabase/migrations/0001_init.sql en el SQL Editor (habilita
-     PostGIS y crea las tablas zonas, negocios, leads, interacciones)
-   - Completar NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY y
-     SUPABASE_SERVICE_ROLE_KEY en .env.local
-   - Sin esto, /mapa dibuja zonas y busca en Overpass bien, pero falla al
-     guardar (insert_zona) y /pipeline no puede leer leads.
-
-2. (Opcional) Google Places API para "Enriquecer con Google":
+1. (Opcional) Google Places API para "Enriquecer con Google":
    - Solo si querés completar telefono/web/rating de los negocios
    - Completar GOOGLE_MAPS_SERVER_API_KEY en .env.local (ver README)
 
-YA RESUELTO EN ESTA SESION
----------------------------
+2. Signup público: hoy está deshabilitado a nivel app (no hay pantalla de
+   registro, solo /login). Nuevos usuarios se crean a mano desde el
+   Dashboard de Supabase (Authentication > Users > Add user).
+
+3. Detalle menor detectado al probar el dedup: cuando una re-busqueda
+   sobre una zona ya existente da como resultado que TODOS los negocios
+   encontrados ya estaban guardados (deduplicados contra negocios de una
+   busqueda anterior), la zona nueva que se crea queda con "0 negocios
+   encontrados" en /zonas. Es porque negocios_count cuenta por zona_id
+   (a que zona pertenece el negocio originalmente), y los negocios
+   deduplicados se quedan con su zona_id original, no se reasignan a la
+   zona de la re-busqueda. Los resultados SI se muestran bien en /mapa al
+   momento de buscar, es solo el contador de /zonas el que puede confundir
+   en este caso puntual. No es un bug de datos, es un tema de que
+   representa el numero. Si molesta, se puede arreglar sumando tambien
+   los negocios "encontrados pero no nuevos" al conteo de esa zona.
+
+YA RESUELTO 2026-08-29
+------------------------
+- Conectado a Supabase real (proyecto mhhjetdntuglyybtkikd), migracion
+  0001_init.sql aplicada (PostGIS + tablas zonas/negocios/leads/interacciones)
+- Auth (Supabase Auth, email+password) + RLS en las 4 tablas (solo
+  "authenticated" puede leer/escribir; migracion 0002_auth_rls.sql)
+- proxy.ts (antes middleware.ts, renombrado en Next 16) protege todas las
+  paginas y las API routes: sin sesion redirige a /login (paginas) o
+  devuelve 401 (api)
+- Tiles cambiados de OSM a Esri "Light Gray Canvas" (gratis, sin API key,
+  estilo minimalista gris con agua celeste) en components/MapCanvas.tsx.
+  OJO: se probo CartoDB Positron primero pero ahora exige API key incluso
+  en su tier gratuito, por eso el cambio a Esri.
+- Pagina de detalle de lead (/leads/[id]): historial de interacciones
+  (tabla interacciones, ya existia en el schema sin UI), etapa/proxima
+  accion/notas editables. Nuevas rutas: GET /api/leads/:id, POST
+  /api/leads/:id/interacciones.
+- Pipeline con drag & drop nativo entre columnas (reemplaza el <select> de
+  etapa) + indicador de "Vencido"/"Hoy" segun proxima_accion_fecha. Fix de
+  timezone: se comparaba con toISOString() (UTC) y marcaba "vencido" cosas
+  de hoy mismo en husos negativos como Argentina -> ahora usa fecha local.
+- Pagina /zonas: lista zonas guardadas con cantidad de negocios, boton
+  "Ver y volver a buscar" que redibuja el poligono guardado en /mapa y
+  dispara una busqueda nueva sobre el (RPC zona_geojson, migracion
+  0003_zona_geojson.sql; rutas GET /api/zonas y GET /api/zonas/:id).
+- Filtros en /mapa (por rubro + solo enriquecidos, afecta lista y markers)
+  y buscador por nombre/rubro en /pipeline.
+- Acciones en bulk en /mapa: seleccionar varios negocios y enriquecer o
+  agregar al pipeline todos juntos (POST /api/leads ahora acepta
+  negocioIds: string[] ademas de negocioId single, con upsert
+  ignoreDuplicates para no romper si alguno ya estaba en el pipeline).
+- /dashboard: metricas (zonas, negocios, leads, tasa de cierre, funnel por
+  etapa, top rubros) agregadas en JS desde GET /api/dashboard, sin
+  librerias de graficos (barras con CSS).
+- Exportar CSV del pipeline filtrado. Verificado interceptando el Blob en
+  el navegador (sin disparar el dialogo nativo de descarga): nombre de
+  archivo correcto, BOM UTF-8 presente (ef bb bf) para que Excel abra bien
+  los acentos, y contenido/headers/escaping correctos con datos reales.
+- Dedup fino en /api/search-zone (lib/dedup.ts): compara por proximidad
+  (<=40m, via @turf/turf) + similitud de nombre (Levenshtein normalizado,
+  >=0.8) tanto entre resultados del mismo batch de Overpass como contra
+  negocios ya guardados en el area. Probado: una re-busqueda sobre la
+  misma zona bajo de 181 a 178 resultados unicos sin crear filas nuevas
+  en la tabla negocios (verificado por API).
+- Mobile responsive: layout.tsx (header no cambia de alto, permite scroll
+  horizontal si no entra), /mapa (mapa+aside apilados en columna en mobile,
+  fila en md+), /pipeline y /zonas (headers envuelven), /leads/[id] (grid
+  proxima accion/fecha a 1 columna en mobile), MapCanvas (pill de
+  "Dibujar zona" con max-width y wrap). Verificado visualmente a 390px de
+  ancho (iPhone 12/13 mini) en /mapa, /pipeline, /zonas, /dashboard y
+  /leads/[id] - la herramienta de resize de ventana del browser no
+  funcionaba en este entorno, asi que se verifico con un iframe de 390px
+  inyectado sobre la misma pagina autenticada (mismo origen, misma sesion,
+  viewport real e independiente para que las media queries de Tailwind se
+  activen de verdad). Todo se ve y apila correctamente.
+
+YA RESUELTO EN SESIONES ANTERIORES
+------------------------------------
 - Proyecto migrado de npm a pnpm (pnpm-lock.yaml)
 - Lint (eslint-plugin-react-hooks 7) y build limpios
 - GET/PATCH/DELETE de /api/leads ahora manejan errores con try/catch
@@ -29,14 +93,7 @@ YA RESUELTO EN ESTA SESION
 - Fix: Overpass devolvia 406 porque el fetch de Node no manda User-Agent
   por default -> se agrego un User-Agent explicito en /api/search-zone
 
-QUE FALTA PARA PRODUCCION (del README, todavia sin hacer)
-------------------------------------------------------------
-- Auth (Supabase Auth) - hoy cualquiera con la URL puede usar la app
-- RLS (Row Level Security) en las tablas - hoy todo el acceso es via
-  service_role key sin restricciones a nivel fila
+QUE FALTA PARA PRODUCCION
+---------------------------
 - Rate limiting propio en /api/search-zone para no abusar de Overpass
   (API publica compartida, puede banear temporalmente)
-- Manejo de duplicados mas fino (hoy dedupea por osm_id/google_place_id
-  exactos, no por proximidad/nombre similar entre fuentes distintas)
-- Pagina de detalle de lead (/leads/[id]) con historial de interacciones
-  - la tabla interacciones ya existe en el schema pero no tiene UI

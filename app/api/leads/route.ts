@@ -31,11 +31,36 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/leads  { negocioId } -> crea un lead en etapa "identificado" para ese negocio
+// POST /api/leads  { negocioIds: [...] } -> variante bulk: crea los que falten, ignora
+// silenciosamente los negocios que ya tienen lead (para "agregar todos" desde el mapa)
 export async function POST(req: NextRequest) {
   const supabase = createServiceClient();
 
   try {
     const body = await req.json();
+
+    if (Array.isArray(body.negocioIds)) {
+      const negocioIds: string[] = body.negocioIds;
+      if (negocioIds.length === 0) {
+        return NextResponse.json({ error: 'Falta negocioIds' }, { status: 400 });
+      }
+
+      const { data, error } = await supabase
+        .from('leads')
+        .upsert(
+          negocioIds.map((id) => ({ negocio_id: id })),
+          { onConflict: 'negocio_id', ignoreDuplicates: true }
+        )
+        .select('*, negocio:negocios(*)');
+
+      if (error) {
+        console.error(error);
+        return NextResponse.json({ error: 'No se pudieron crear los leads' }, { status: 500 });
+      }
+
+      return NextResponse.json({ leads: data }, { status: 201 });
+    }
+
     const negocioId: string = body.negocioId;
 
     if (!negocioId) {

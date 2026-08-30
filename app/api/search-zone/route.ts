@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as turf from '@turf/turf';
 import { createServiceClient } from '@/lib/supabase/server';
+import { sonElMismoNegocio } from '@/lib/dedup';
+import type { Negocio } from '@/lib/types';
 
 // Tags de Overpass que consideramos "negocio". Ajustá esta lista según el
 // rubro que estés prospectando (ej: agregar shop=supermarket puntual, o
@@ -123,11 +125,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ zonaId, negocios: [] });
     }
 
+    // Dedup fino: Overpass a veces devuelve el mismo comercio dos veces (un
+    // node y un way para el mismo lugar), y volver a buscar sobre una zona
+    // superpuesta puede traer una entidad nueva de OSM para un negocio que
+    // ya habíamos guardado antes. El unique(fuente, osm_id) de la tabla solo
+    // frena duplicados exactos por ID — acá comparamos por proximidad +
+    // similitud de nombre para agarrar el resto.
+    const [minLng, minLat, maxLng, maxLat] = bbox;
+    const { data: negociosExistentes } = await supabase
+      .from('negocios')
+      .select('*')
+      .gte('lat', minLat)
+      .lte('lat', maxLat)
+      .gte('lng', minLng)
+      .lte('lng', maxLng);
+
+    const existentesEncontrados: Negocio[] = [];
+    const candidatosUnicos: typeof candidatos = [];
+
+    for (const c of candidatos) {
+      const dupInterno = candidatosUnicos.some((k) => sonElMismoNegocio(k, c));
+      if (dupInterno) continue;
+
+      const dupExistente = (negociosExistentes ?? []).find((n) => sonElMismoNegocio(n, c));
+      if (dupExistente) {
+        if (!existentesEncontrados.some((n) => n.id === dupExistente.id)) {
+          existentesEncontrados.push(dupExistente);
+        }
+        continue;
+      }
+
+      candidatosUnicos.push(c);
+    }
+
+    if (candidatosUnicos.length === 0) {
+      return NextResponse.json({ zonaId, negocios: existentesEncontrados });
+    }
+
     // Upsert por (fuente, osm_id) para no duplicar si volvés a buscar la misma zona
-    const { data: negocios, error: insertError } = await supabase
+    const { data: negociosInsertados, error: insertError } = await supabase
       .from('negocios')
       .upsert(
-        candidatos.map((c) => ({
+        candidatosUnicos.map((c) => ({
           zona_id: zonaId,
           nombre: c.nombre,
           direccion: c.direccion,
@@ -146,7 +185,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No se pudieron guardar los negocios encontrados' }, { status: 500 });
     }
 
-    return NextResponse.json({ zonaId, negocios });
+    return NextResponse.json({
+      zonaId,
+      negocios: [...existentesEncontrados, ...(negociosInsertados ?? [])],
+    });
   } catch (err) {
     console.error(err);
     return NextResponse.json({ error: 'Error inesperado buscando la zona' }, { status: 500 });

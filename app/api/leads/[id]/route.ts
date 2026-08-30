@@ -11,6 +11,42 @@ const ETAPAS_VALIDAS: Etapa[] = [
   'perdido',
 ];
 
+// GET /api/leads/:id  -> el lead con su negocio y el historial de interacciones
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
+  try {
+    const supabase = createServiceClient();
+
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('*, negocio:negocios(*)')
+      .eq('id', id)
+      .single();
+
+    if (leadError) {
+      console.error(leadError);
+      return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+    }
+
+    const { data: interacciones, error: interaccionesError } = await supabase
+      .from('interacciones')
+      .select('*')
+      .eq('lead_id', id)
+      .order('created_at', { ascending: false });
+
+    if (interaccionesError) {
+      console.error(interaccionesError);
+      return NextResponse.json({ error: 'No se pudieron leer las interacciones' }, { status: 500 });
+    }
+
+    return NextResponse.json({ lead, interacciones });
+  } catch (err) {
+    console.error(err);
+    return NextResponse.json({ error: 'Error inesperado leyendo el lead' }, { status: 500 });
+  }
+}
+
 // PATCH /api/leads/:id  { etapa?, proximaAccion?, proximaAccionFecha?, notas? }
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

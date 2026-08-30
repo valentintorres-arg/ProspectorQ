@@ -9,6 +9,10 @@ interface MapCanvasProps {
   onZoneDrawn: (polygon: GeoJSON.Polygon) => void;
   resultados: Negocio[];
   buscando: boolean;
+  // Zona ya guardada que hay que dibujar apenas el mapa esté listo (ej. al
+  // volver a buscar desde /zonas). No dispara onZoneDrawn: eso lo maneja
+  // la página que la pasó.
+  initialPolygon?: GeoJSON.Polygon | null;
 }
 
 // Convierte un L.Polygon dibujado a un GeoJSON Polygon en [lng, lat]
@@ -25,12 +29,17 @@ function polygonToGeoJSON(latlngs: L.LatLng[]): GeoJSON.Polygon {
   return { type: 'Polygon', coordinates: [coords] };
 }
 
-export default function MapCanvas({ onZoneDrawn, resultados, buscando }: MapCanvasProps) {
+function geoJSONToLatLngs(polygon: GeoJSON.Polygon): L.LatLng[] {
+  return polygon.coordinates[0].map(([lng, lat]) => L.latLng(lat, lng));
+}
+
+export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPolygon }: MapCanvasProps) {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const draftPolygonRef = useRef<L.Polygon | null>(null);
   const finalPolygonRef = useRef<L.Polygon | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
+  const initialDrawnRef = useRef(false);
   const [ready, setReady] = useState(false);
   const [dibujando, setDibujando] = useState(false);
   const [puntos, setPuntos] = useState(0);
@@ -47,10 +56,22 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando }: MapCanv
       zoom: 12,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      maxZoom: 19,
-    }).addTo(map);
+    // Esri "Light Gray Canvas": gratis, sin API key, estilo minimalista
+    // (grises + agua celeste) — más legible que OSM para mirar markers.
+    // Nota: se probó CartoDB Positron primero pero ahora exige API key
+    // incluso en su tier "gratuito", por eso Esri en su lugar.
+    const attribution =
+      'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+      { attribution, maxZoom: 16 }
+    ).addTo(map);
+    // Capa de referencia (nombres de calles/barrios): se agrega después,
+    // así queda arriba del canvas gris dentro del mismo tilePane.
+    L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
+      { attribution, maxZoom: 16 }
+    ).addTo(map);
 
     mapRef.current = map;
     setReady(true);
@@ -124,6 +145,23 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando }: MapCanv
     setDibujando(false);
   }
 
+  // Dibuja una zona ya guardada (pasada por prop) una sola vez, apenas el
+  // mapa está listo, y centra la vista sobre ella.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !initialPolygon || initialDrawnRef.current) return;
+    initialDrawnRef.current = true;
+
+    const polygon = L.polygon(geoJSONToLatLngs(initialPolygon), {
+      color: '#2563eb',
+      weight: 2,
+      fillColor: '#2563eb',
+      fillOpacity: 0.1,
+    }).addTo(map);
+    finalPolygonRef.current = polygon;
+    map.fitBounds(polygon.getBounds(), { padding: [40, 40] });
+  }, [ready, initialPolygon]);
+
   // Pintar los resultados como markers cada vez que cambian
   useEffect(() => {
     const map = mapRef.current;
@@ -157,7 +195,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando }: MapCanv
       )}
 
       {ready && (
-        <div className="absolute left-1/2 top-4 z-[1000] -translate-x-1/2 flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow">
+        <div className="absolute left-1/2 top-4 z-[1000] flex max-w-[92%] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full bg-white px-3 py-1.5 shadow">
           {!dibujando ? (
             <button
               onClick={iniciarDibujo}
