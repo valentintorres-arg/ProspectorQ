@@ -126,17 +126,17 @@ export default function PipelinePage() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-6">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <div className="flex h-full flex-col p-4 sm:p-6">
+        <div className="mb-6 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <Skeleton className="h-8 w-32" />
           <div className="flex items-center gap-2">
             <Skeleton className="h-9 w-full rounded-full sm:w-64" />
             <Skeleton className="h-9 w-32 rounded-xl" />
           </div>
         </div>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-4">
           {ETAPAS.map((etapa) => (
-            <div key={etapa} className="w-72 shrink-0 rounded-xl bg-surface-container-low/50 p-2">
+            <div key={etapa} className="h-full w-72 shrink-0 rounded-xl bg-surface-container-low/50 p-2">
               <div className="mb-2 flex items-center justify-between px-2 py-1">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-4 w-6 rounded-full" />
@@ -157,8 +157,8 @@ export default function PipelinePage() {
   }
 
   return (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <div className="flex h-full flex-col p-4 sm:p-6">
+      <div className="mb-6 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <h1 className="font-headline text-2xl font-semibold text-on-surface">{t.pipeline.title}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
@@ -196,7 +196,7 @@ export default function PipelinePage() {
         </div>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto pb-4">
         {ETAPAS.map((etapa) => {
           const leadsDeEtapa = leadsFiltrados.filter((l) => l.etapa === etapa);
           const isDragOver = dragOverEtapa === etapa;
@@ -213,18 +213,18 @@ export default function PipelinePage() {
                 e.preventDefault();
                 handleDrop(etapa);
               }}
-              className={`w-72 shrink-0 rounded-xl p-2 transition-colors ${
+              className={`flex h-full w-72 shrink-0 flex-col rounded-xl p-2 transition-colors ${
                 isDragOver ? 'bg-primary-container/20 ring-2 ring-primary-container' : 'bg-surface-container-low/50'
               }`}
             >
-              <div className="mb-2 flex items-center justify-between px-2 py-1">
+              <div className="mb-2 flex shrink-0 items-center justify-between px-2 py-1">
                 <h2 className="font-title text-sm font-semibold text-on-surface">{t.etapas[etapa]}</h2>
                 <span className="font-mono rounded-full bg-surface-container-highest px-2 py-0.5 text-xs text-on-surface-variant">
                   {leadsDeEtapa.length}
                 </span>
               </div>
 
-              <div className="space-y-2">
+              <div className="flex-1 space-y-2 overflow-y-auto">
                 {leadsDeEtapa.map((lead) => {
                   const estado = estadoFecha(lead.proxima_accion_fecha);
                   return (
