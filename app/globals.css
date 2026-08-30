@@ -1,26 +1,184 @@
 @import "tailwindcss";
 
+/* Dark mode por clase (.dark en <html>), no por prefers-color-scheme:
+   así el toggle manual del sidebar puede pisar el sistema operativo. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design system de Prospector (paleta Material 3 generada por Stitch a
+   partir de un seed lavanda). Los tokens "-fixed"/"-fixed-dim" y
+   "inverse-*" son iguales en claro y oscuro por diseño de M3: se usaron
+   para derivar la paleta oscura de forma consistente en vez de inventarla
+   a mano. Ver stitch_prospector_geo_sales_ui_toolkit/prospector/DESIGN.md
+   en la raíz del repo de diseño para la referencia original. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-surface: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-surface-variant: #d3e4fe;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #494552;
+  --color-inverse-surface: #213145;
+  --color-inverse-on-surface: #eaf1ff;
+  --color-outline: #7a7583;
+  --color-outline-variant: #cac4d4;
+
+  --color-background: #f8f9ff;
+  --color-on-background: #0b1c30;
+
+  --color-primary: #674bb5;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #a78bfa;
+  --color-on-primary-container: #3c1989;
+  --color-inverse-primary: #cebdff;
+
+  --color-secondary: #006c4b;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #64f9bc;
+  --color-on-secondary-container: #00714e;
+
+  --color-tertiary: #855316;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #cd904e;
+  --color-on-tertiary-container: #4e2c00;
+
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  /* Tokens "fixed": no cambian entre claro/oscuro (spec M3) */
+  --color-primary-fixed: #e8ddff;
+  --color-primary-fixed-dim: #cebdff;
+  --color-on-primary-fixed: #21005e;
+  --color-on-primary-fixed-variant: #4f319c;
+  --color-secondary-fixed: #68fcbf;
+  --color-secondary-fixed-dim: #45dfa4;
+  --color-on-secondary-fixed: #002114;
+  --color-on-secondary-fixed-variant: #005137;
+  --color-tertiary-fixed: #ffdcbd;
+  --color-tertiary-fixed-dim: #fcb973;
+  --color-on-tertiary-fixed: #2c1600;
+  --color-on-tertiary-fixed-variant: #683c00;
+}
+
+.dark {
+  --color-surface: #0f172a;
+  --color-surface-dim: #0b1220;
+  --color-surface-bright: #1e293b;
+  --color-surface-container-lowest: #0b1220;
+  --color-surface-container-low: #141f38;
+  --color-surface-container: #1a2740;
+  --color-surface-container-high: #202f4a;
+  --color-surface-container-highest: #263654;
+  --color-surface-variant: #334361;
+  --color-on-surface: #e2e8f0;
+  --color-on-surface-variant: #b6c2d9;
+  --color-inverse-surface: #e2e8f0;
+  --color-inverse-on-surface: #1a2740;
+  --color-outline: #7d8aa8;
+  --color-outline-variant: #334361;
+
+  --color-background: #0f172a;
+  --color-on-background: #e2e8f0;
+
+  /* primary/secondary/tertiary en oscuro = los "inverse"/"fixed-dim" del
+     esquema claro (relación M3 estándar), asi quedan consistentes con la
+     paleta original en vez de inventados */
+  --color-primary: #cebdff;
+  --color-on-primary: #2f1a63;
+  --color-primary-container: #4f319c;
+  --color-on-primary-container: #e8ddff;
+  --color-inverse-primary: #674bb5;
+
+  --color-secondary: #45dfa4;
+  --color-on-secondary: #00391f;
+  --color-secondary-container: #005137;
+  --color-on-secondary-container: #68fcbf;
+
+  --color-tertiary: #fcb973;
+  --color-on-tertiary: #4a2800;
+  --color-tertiary-container: #683c00;
+  --color-on-tertiary-container: #ffdcbd;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-}
+  --color-surface: var(--color-surface);
+  --color-surface-dim: var(--color-surface-dim);
+  --color-surface-bright: var(--color-surface-bright);
+  --color-surface-container-lowest: var(--color-surface-container-lowest);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-surface-variant: var(--color-surface-variant);
+  --color-on-surface: var(--color-on-surface);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-inverse-surface: var(--color-inverse-surface);
+  --color-inverse-on-surface: var(--color-inverse-on-surface);
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: var(--color-background);
+  --color-on-background: var(--color-on-background);
+
+  --color-primary: var(--color-primary);
+  --color-on-primary: var(--color-on-primary);
+  --color-primary-container: var(--color-primary-container);
+  --color-on-primary-container: var(--color-on-primary-container);
+  --color-inverse-primary: var(--color-inverse-primary);
+
+  --color-secondary: var(--color-secondary);
+  --color-on-secondary: var(--color-on-secondary);
+  --color-secondary-container: var(--color-secondary-container);
+  --color-on-secondary-container: var(--color-on-secondary-container);
+
+  --color-tertiary: var(--color-tertiary);
+  --color-on-tertiary: var(--color-on-tertiary);
+  --color-tertiary-container: var(--color-tertiary-container);
+  --color-on-tertiary-container: var(--color-on-tertiary-container);
+
+  --color-error: var(--color-error);
+  --color-on-error: var(--color-on-error);
+  --color-error-container: var(--color-error-container);
+  --color-on-error-container: var(--color-on-error-container);
+
+  --color-primary-fixed: var(--color-primary-fixed);
+  --color-primary-fixed-dim: var(--color-primary-fixed-dim);
+  --color-on-primary-fixed: var(--color-on-primary-fixed);
+  --color-on-primary-fixed-variant: var(--color-on-primary-fixed-variant);
+  --color-secondary-fixed: var(--color-secondary-fixed);
+  --color-secondary-fixed-dim: var(--color-secondary-fixed-dim);
+  --color-on-secondary-fixed: var(--color-on-secondary-fixed);
+  --color-on-secondary-fixed-variant: var(--color-on-secondary-fixed-variant);
+  --color-tertiary-fixed: var(--color-tertiary-fixed);
+  --color-tertiary-fixed-dim: var(--color-tertiary-fixed-dim);
+  --color-on-tertiary-fixed: var(--color-on-tertiary-fixed);
+  --color-on-tertiary-fixed-variant: var(--color-on-tertiary-fixed-variant);
+
+  /* Radios generosos (spec de diseño) */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* Tipografía: variables inyectadas por next/font en layout.tsx */
+  --font-headline: var(--font-hanken-grotesk), sans-serif;
+  --font-body: var(--font-inter), sans-serif;
+  --font-label: var(--font-geist), sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-on-background);
+  font-family: var(--font-body);
 }

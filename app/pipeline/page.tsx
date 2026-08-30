@@ -117,26 +117,32 @@ export default function PipelinePage() {
     );
   }, [leads, busqueda]);
 
-  if (loading) return <div className="p-6 text-sm text-gray-500">Cargando pipeline…</div>;
-  if (error) return <div className="p-6 text-sm text-red-600">{error}</div>;
+  if (loading) return <div className="p-6 text-sm text-on-surface-variant">Cargando pipeline…</div>;
+  if (error) return <div className="p-6 text-sm text-error">{error}</div>;
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <h1 className="text-xl font-semibold">Pipeline de prospección</h1>
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <h1 className="font-headline text-2xl font-semibold text-on-surface">Pipeline</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o rubro…"
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="w-full rounded-md border border-gray-200 px-3 py-1.5 text-sm sm:w-64"
-          />
+          <div className="relative w-full sm:w-64">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o rubro…"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="w-full rounded-full border-0 bg-surface-container-low py-2 pl-9 pr-3 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
+            />
+          </div>
           <button
             onClick={() => exportarCSV(leadsFiltrados)}
             disabled={leadsFiltrados.length === 0}
-            className="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium hover:bg-gray-200 disabled:opacity-50"
+            className="font-label flex items-center gap-1.5 rounded-xl border-2 border-primary/30 px-4 py-2 text-sm font-medium text-primary hover:bg-primary-container/20 disabled:opacity-50"
           >
+            <span className="material-symbols-outlined text-[18px]">download</span>
             Exportar CSV
           </button>
         </div>
@@ -159,13 +165,13 @@ export default function PipelinePage() {
                 e.preventDefault();
                 handleDrop(etapa.value);
               }}
-              className={`w-72 shrink-0 rounded-lg p-1 transition-colors ${
-                isDragOver ? 'bg-blue-50 ring-2 ring-blue-200' : ''
+              className={`w-72 shrink-0 rounded-xl p-2 transition-colors ${
+                isDragOver ? 'bg-primary-container/20 ring-2 ring-primary-container' : 'bg-surface-container-low/50'
               }`}
             >
-              <div className="mb-2 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-gray-700">{etapa.label}</h2>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+              <div className="mb-2 flex items-center justify-between px-2 py-1">
+                <h2 className="font-title text-sm font-semibold text-on-surface">{etapa.label}</h2>
+                <span className="font-mono rounded-full bg-surface-container-highest px-2 py-0.5 text-xs text-on-surface-variant">
                   {leadsDeEtapa.length}
                 </span>
               </div>
@@ -180,34 +186,43 @@ export default function PipelinePage() {
                       onDragStart={() => setDragLeadId(lead.id)}
                       onDragEnd={() => setDragLeadId(null)}
                       onClick={() => router.push(`/leads/${lead.id}`)}
-                      className={`cursor-pointer rounded-md border border-gray-200 bg-white p-3 shadow-sm hover:border-blue-300 ${
+                      className={`cursor-pointer rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-3 shadow-sm transition-all hover:border-primary/30 ${
                         dragLeadId === lead.id ? 'opacity-40' : ''
                       }`}
                     >
-                      <p className="text-sm font-medium">{lead.negocio?.nombre}</p>
                       {lead.negocio?.rubro && (
-                        <p className="text-xs text-gray-500">{lead.negocio.rubro}</p>
+                        <span className="font-label mb-1.5 inline-block rounded-full border border-outline-variant/20 bg-surface-container-highest px-2 py-0.5 text-[10px] text-on-surface-variant">
+                          {lead.negocio.rubro}
+                        </span>
                       )}
+                      <p className="font-title text-sm font-semibold text-on-surface">{lead.negocio?.nombre}</p>
                       {lead.proxima_accion && (
-                        <p
-                          className={`mt-1 text-xs font-medium ${
-                            estado === 'vencido'
-                              ? 'text-red-600'
-                              : estado === 'hoy'
-                                ? 'text-amber-600'
-                                : 'text-blue-700'
-                          }`}
-                        >
-                          {estado === 'vencido' ? '⚠ Vencido: ' : estado === 'hoy' ? '● Hoy: ' : 'Próximo: '}
-                          {lead.proxima_accion}
-                          {lead.proxima_accion_fecha ? ` (${lead.proxima_accion_fecha})` : ''}
-                        </p>
+                        <>
+                          <p className="mt-1 text-xs text-on-surface-variant">
+                            {lead.proxima_accion}
+                            {lead.proxima_accion_fecha ? ` · ${lead.proxima_accion_fecha}` : ''}
+                          </p>
+                          <p
+                            className={`font-label mt-1.5 flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
+                              estado === 'vencido'
+                                ? 'bg-error-container text-on-error-container'
+                                : estado === 'hoy'
+                                  ? 'bg-tertiary-fixed text-on-tertiary-fixed-variant'
+                                  : 'bg-primary-fixed text-on-primary-fixed-variant'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[12px]">
+                              {estado === 'vencido' ? 'warning' : 'schedule'}
+                            </span>
+                            {estado === 'vencido' ? 'Vencido' : estado === 'hoy' ? 'Hoy' : 'Próximo'}
+                          </p>
+                        </>
                       )}
                     </div>
                   );
                 })}
                 {leadsDeEtapa.length === 0 && (
-                  <div className="rounded-md border border-dashed border-gray-200 p-3 text-center text-xs text-gray-400">
+                  <div className="rounded-xl border border-dashed border-outline-variant/30 p-3 text-center text-xs text-on-surface-variant/60">
                     Soltá una tarjeta acá
                   </div>
                 )}

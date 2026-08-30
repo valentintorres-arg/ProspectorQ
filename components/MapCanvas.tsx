@@ -54,6 +54,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     const map = L.map(mapDivRef.current, {
       center: [-34.6037, -58.3816], // Buenos Aires. Ajustá si tu zona de trabajo es otra.
       zoom: 12,
+      zoomControl: false, // se reemplaza por los botones +/- propios (estética del design system)
     });
 
     // Esri "Light Gray Canvas": gratis, sin API key, estilo minimalista
@@ -102,12 +103,17 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     limpiarDibujoActual();
 
     const draft = L.polygon([], {
-      color: '#2563eb',
+      color: '#674bb5',
       weight: 2,
-      fillColor: '#2563eb',
+      fillColor: '#674bb5',
       fillOpacity: 0.15,
     }).addTo(map);
     draftPolygonRef.current = draft;
+
+    // Leaflet maneja el cursor con sus propias clases (leaflet-grab, etc.),
+    // así que una clase de Tailwind en el div contenedor no alcanza a
+    // pisarlas — se fuerza por inline style directo sobre el container.
+    map.getContainer().style.cursor = 'crosshair';
 
     map.on('click', onMapClickDuringDraw);
     setDibujando(true);
@@ -129,6 +135,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     if (latlngs.length < 3) return;
 
     map.off('click', onMapClickDuringDraw);
+    map.getContainer().style.cursor = '';
 
     draft.setStyle({ fillOpacity: 0.1 });
     finalPolygonRef.current = draft;
@@ -141,6 +148,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
 
   function cancelarDibujo() {
     mapRef.current?.off('click', onMapClickDuringDraw);
+    if (mapRef.current) mapRef.current.getContainer().style.cursor = '';
     limpiarDibujoActual();
     setDibujando(false);
   }
@@ -153,9 +161,9 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     initialDrawnRef.current = true;
 
     const polygon = L.polygon(geoJSONToLatLngs(initialPolygon), {
-      color: '#2563eb',
+      color: '#674bb5',
       weight: 2,
-      fillColor: '#2563eb',
+      fillColor: '#674bb5',
       fillOpacity: 0.1,
     }).addTo(map);
     finalPolygonRef.current = polygon;
@@ -175,7 +183,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
         radius: 6,
         color: '#ffffff',
         weight: 1,
-        fillColor: negocio.enriquecido ? '#16a34a' : '#f59e0b',
+        fillColor: negocio.enriquecido ? '#006c4b' : '#855316',
         fillOpacity: 1,
       })
         .bindTooltip(negocio.nombre)
@@ -186,48 +194,66 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
 
   return (
     <div className="relative h-full w-full">
-      <div ref={mapDivRef} className="h-full w-full rounded-lg border border-gray-200" />
+      <div ref={mapDivRef} className="h-full w-full rounded-xl border border-outline-variant/20" />
 
       {!ready && (
-        <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-white/60 text-sm text-gray-500">
+        <div className="absolute inset-0 z-[1000] flex items-center justify-center rounded-xl bg-surface/60 text-sm text-on-surface-variant">
           Cargando mapa…
         </div>
       )}
 
       {ready && (
-        <div className="absolute left-1/2 top-4 z-[1000] flex max-w-[92%] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full bg-white px-3 py-1.5 shadow">
-          {!dibujando ? (
+        <>
+          <div className="absolute left-6 top-6 z-[1000] flex flex-col gap-2">
             <button
-              onClick={iniciarDibujo}
-              className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+              onClick={() => mapRef.current?.zoomIn()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/10 bg-surface text-on-surface shadow-sm hover:bg-surface-container-low"
             >
-              Dibujar zona
+              <span className="material-symbols-outlined">add</span>
             </button>
-          ) : (
-            <>
-              <span className="text-xs text-gray-600">
-                {puntos < 3 ? `Marcá al menos 3 puntos (${puntos})` : `${puntos} puntos`}
-              </span>
+            <button
+              onClick={() => mapRef.current?.zoomOut()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-outline-variant/10 bg-surface text-on-surface shadow-sm hover:bg-surface-container-low"
+            >
+              <span className="material-symbols-outlined">remove</span>
+            </button>
+          </div>
+
+          <div className="absolute left-1/2 top-4 z-[1000] flex max-w-[92%] -translate-x-1/2 flex-wrap items-center justify-center gap-2 rounded-full border border-outline-variant/10 bg-surface px-3 py-1.5 shadow-sm">
+            {!dibujando ? (
               <button
-                onClick={cerrarZona}
-                disabled={puntos < 3}
-                className="rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+                onClick={iniciarDibujo}
+                className="font-label flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-on-primary hover:opacity-90"
               >
-                Cerrar zona
+                <span className="material-symbols-outlined text-[16px]">draw</span>
+                Dibujar zona
               </button>
-              <button
-                onClick={cancelarDibujo}
-                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium hover:bg-gray-200"
-              >
-                Cancelar
-              </button>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <span className="font-label text-xs text-on-surface-variant">
+                  {puntos < 3 ? `Marcá al menos 3 puntos (${puntos})` : `${puntos} puntos`}
+                </span>
+                <button
+                  onClick={cerrarZona}
+                  disabled={puntos < 3}
+                  className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-40"
+                >
+                  Cerrar zona
+                </button>
+                <button
+                  onClick={cancelarDibujo}
+                  className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80"
+                >
+                  Cancelar
+                </button>
+              </>
+            )}
+          </div>
+        </>
       )}
 
       {buscando && (
-        <div className="absolute left-1/2 top-16 z-[1000] -translate-x-1/2 rounded-full bg-white px-4 py-1.5 text-sm shadow">
+        <div className="absolute left-1/2 top-16 z-[1000] -translate-x-1/2 rounded-full border border-outline-variant/10 bg-surface px-4 py-1.5 text-sm text-on-surface-variant shadow-sm">
           Buscando negocios en la zona…
         </div>
       )}

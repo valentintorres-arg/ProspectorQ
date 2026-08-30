@@ -191,7 +191,7 @@ function MapaContent() {
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col gap-4 p-4 md:h-[calc(100vh-4rem)] md:flex-row">
+    <div className="flex h-full flex-col gap-4 p-4 md:flex-row">
       <div className="h-[45vh] shrink-0 md:h-auto md:flex-1">
         <MapCanvas
           onZoneDrawn={handleZoneDrawn}
@@ -201,151 +201,174 @@ function MapaContent() {
         />
       </div>
 
-      <aside className="min-h-[300px] flex-1 overflow-y-auto rounded-lg border border-gray-200 p-4 md:w-96 md:flex-none">
-        <div className="mb-1 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Resultados</h2>
-          <Link href="/zonas" className="text-xs text-blue-600 hover:underline">
-            Ver zonas guardadas
-          </Link>
+      <aside className="flex min-h-[300px] flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant/20 bg-surface md:w-96 md:flex-none">
+        <div className="border-b border-outline-variant/10 bg-surface-container-low/50 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-title text-base font-semibold text-on-surface">Resultados</h2>
+            <Link href="/zonas" className="font-label text-xs text-primary hover:underline">
+              Ver zonas guardadas
+            </Link>
+          </div>
+          <p className="mt-1 text-sm text-on-surface-variant">
+            {nombreZonaCargada
+              ? `Volviendo a buscar sobre "${nombreZonaCargada}".`
+              : 'Dibujá un polígono en el mapa (botón de dibujo arriba del mapa) para buscar negocios en esa zona.'}
+          </p>
         </div>
-        <p className="mb-4 text-sm text-gray-500">
-          {nombreZonaCargada
-            ? `Volviendo a buscar sobre "${nombreZonaCargada}".`
-            : 'Dibujá un polígono en el mapa (botón de dibujo arriba del mapa) para buscar negocios en esa zona.'}
-        </p>
 
-        {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
-        )}
+        <div className="flex-1 overflow-y-auto p-4">
+          {error && (
+            <div className="mb-4 rounded-lg bg-error-container p-3 text-sm text-on-error-container">{error}</div>
+          )}
 
-        {resultados.length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center gap-2">
-            <select
-              value={filtroRubro}
-              onChange={(e) => setFiltroRubro(e.target.value)}
-              className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs"
-            >
-              <option value="">Todos los rubros</option>
-              {rubros.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-1 text-xs text-gray-600">
-              <input
-                type="checkbox"
-                checked={soloEnriquecidos}
-                onChange={(e) => setSoloEnriquecidos(e.target.checked)}
-              />
-              Solo enriquecidos
-            </label>
-            <span className="text-xs text-gray-400">
-              {resultadosFiltrados.length} / {resultados.length}
-            </span>
-          </div>
-        )}
+          {resultados.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <select
+                value={filtroRubro}
+                onChange={(e) => setFiltroRubro(e.target.value)}
+                className="font-label rounded-full border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-xs text-on-surface-variant"
+              >
+                <option value="">Todos los rubros</option>
+                {rubros.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <label className="font-label flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={soloEnriquecidos}
+                  onChange={(e) => setSoloEnriquecidos(e.target.checked)}
+                  className="accent-primary"
+                />
+                Solo enriquecidos
+              </label>
+              <span className="font-mono text-xs text-on-surface-variant/70">
+                {resultadosFiltrados.length} / {resultados.length}
+              </span>
+            </div>
+          )}
 
-        {resultadosFiltrados.length > 0 && (
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-100 pb-3">
-            <label className="flex items-center gap-1.5 text-xs text-gray-600">
-              <input
-                type="checkbox"
-                checked={
-                  seleccionados.size > 0 &&
-                  resultadosFiltrados.every((n) => seleccionados.has(n.id))
-                }
-                onChange={(e) =>
-                  setSeleccionados(
-                    e.target.checked ? new Set(resultadosFiltrados.map((n) => n.id)) : new Set()
-                  )
-                }
-              />
-              Seleccionar todos ({seleccionados.size})
-            </label>
-            {seleccionados.size > 0 && (
-              <div className="flex gap-2">
-                <button
-                  onClick={handleEnriquecerBulk}
-                  disabled={bulkEnriqueciendo}
-                  className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium hover:bg-gray-200 disabled:opacity-50"
-                >
-                  {bulkEnriqueciendo ? 'Enriqueciendo…' : 'Enriquecer selección'}
-                </button>
-                <button
-                  onClick={handleAgregarBulk}
-                  disabled={bulkAgregando}
-                  className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {bulkAgregando ? 'Agregando…' : 'Agregar todos a pipeline'}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {resultados.length === 0 && !buscando && (
-          <p className="text-sm text-gray-400">Todavía no hay resultados.</p>
-        )}
-
-        <ul className="space-y-3">
-          {resultadosFiltrados.map((negocio) => (
-            <li key={negocio.id} className="rounded-md border border-gray-200 p-3">
-              <div className="flex items-start justify-between gap-2">
+          {resultadosFiltrados.length > 0 && (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/10 pb-3">
+              <label className="font-label flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={
+                    seleccionados.size > 0 &&
+                    resultadosFiltrados.every((n) => seleccionados.has(n.id))
+                  }
+                  onChange={(e) =>
+                    setSeleccionados(
+                      e.target.checked ? new Set(resultadosFiltrados.map((n) => n.id)) : new Set()
+                    )
+                  }
+                  className="accent-primary"
+                />
+                Seleccionar todos ({seleccionados.size})
+              </label>
+              {seleccionados.size > 0 && (
                 <div className="flex gap-2">
-                  <input
-                    type="checkbox"
-                    checked={seleccionados.has(negocio.id)}
-                    onChange={() => toggleSeleccionado(negocio.id)}
-                    className="mt-1"
-                  />
-                  <div>
-                    <p className="font-medium">{negocio.nombre}</p>
-                    {negocio.rubro && <p className="text-xs text-gray-500">{negocio.rubro}</p>}
-                    {negocio.direccion && <p className="text-xs text-gray-500">{negocio.direccion}</p>}
-                    {negocio.telefono && <p className="text-xs text-gray-700">📞 {negocio.telefono}</p>}
-                    {negocio.web && (
-                      <a
-                        href={negocio.web}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-blue-600 underline"
-                      >
-                        {negocio.web}
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    negocio.enriquecido ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                  }`}
-                >
-                  {negocio.enriquecido ? 'enriquecido' : 'básico (OSM)'}
-                </span>
-              </div>
-
-              <div className="mt-2 flex gap-2">
-                {!negocio.enriquecido && (
                   <button
-                    onClick={() => handleEnriquecer(negocio.id)}
-                    disabled={enriqueciendoIds.has(negocio.id)}
-                    className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium hover:bg-gray-200 disabled:opacity-50"
+                    onClick={handleEnriquecerBulk}
+                    disabled={bulkEnriqueciendo}
+                    className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80 disabled:opacity-50"
                   >
-                    {enriqueciendoIds.has(negocio.id) ? 'Enriqueciendo…' : 'Enriquecer con Google'}
+                    {bulkEnriqueciendo ? 'Enriqueciendo…' : 'Enriquecer selección'}
                   </button>
-                )}
-                <button
-                  onClick={() => handleAgregarAPipeline(negocio.id)}
-                  disabled={agregadosIds.has(negocio.id)}
-                  className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {agregadosIds.has(negocio.id) ? 'En pipeline ✓' : 'Agregar a pipeline'}
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+                  <button
+                    onClick={handleAgregarBulk}
+                    disabled={bulkAgregando}
+                    className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
+                  >
+                    {bulkAgregando ? 'Agregando…' : 'Agregar todos a pipeline'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {resultados.length === 0 && !buscando && (
+            <p className="text-sm text-on-surface-variant/70">Todavía no hay resultados.</p>
+          )}
+
+          <ul className="space-y-3">
+            {resultadosFiltrados.map((negocio) => (
+              <li
+                key={negocio.id}
+                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-4 transition-all hover:border-primary/30 hover:shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex gap-2">
+                    <input
+                      type="checkbox"
+                      checked={seleccionados.has(negocio.id)}
+                      onChange={() => toggleSeleccionado(negocio.id)}
+                      className="mt-1 accent-primary"
+                    />
+                    <div>
+                      <p className="font-title text-sm font-semibold text-on-surface">{negocio.nombre}</p>
+                      {negocio.rubro && (
+                        <p className="font-label mt-1 text-xs text-on-surface-variant">{negocio.rubro}</p>
+                      )}
+                      {negocio.direccion && (
+                        <p className="font-label mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
+                          <span className="material-symbols-outlined text-[13px]">location_on</span>
+                          {negocio.direccion}
+                        </p>
+                      )}
+                      {negocio.telefono && (
+                        <p className="font-label mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
+                          <span className="material-symbols-outlined text-[13px]">call</span>
+                          {negocio.telefono}
+                        </p>
+                      )}
+                      {negocio.web && (
+                        <a
+                          href={negocio.web}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-label mt-0.5 block text-xs text-primary underline"
+                        >
+                          {negocio.web}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className={`font-mono shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                      negocio.enriquecido
+                        ? 'bg-primary-fixed text-on-primary-fixed-variant'
+                        : 'border border-outline-variant/20 bg-surface-container-highest text-on-surface-variant'
+                    }`}
+                  >
+                    {negocio.enriquecido ? 'enriquecido' : 'básico (OSM)'}
+                  </span>
+                </div>
+
+                <div className="mt-3 flex gap-2 border-t border-outline-variant/10 pt-3">
+                  {!negocio.enriquecido && (
+                    <button
+                      onClick={() => handleEnriquecer(negocio.id)}
+                      disabled={enriqueciendoIds.has(negocio.id)}
+                      className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80 disabled:opacity-50"
+                    >
+                      {enriqueciendoIds.has(negocio.id) ? 'Enriqueciendo…' : 'Enriquecer con Google'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleAgregarAPipeline(negocio.id)}
+                    disabled={agregadosIds.has(negocio.id)}
+                    className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
+                  >
+                    {agregadosIds.has(negocio.id) ? 'En pipeline ✓' : 'Agregar a pipeline'}
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </aside>
     </div>
   );

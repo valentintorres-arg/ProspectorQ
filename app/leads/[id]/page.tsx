@@ -11,6 +11,14 @@ import {
   type TipoInteraccion,
 } from '@/lib/types';
 
+const ICONO_INTERACCION: Record<TipoInteraccion, string> = {
+  nota: 'description',
+  llamada: 'call',
+  mail: 'mail',
+  reunion: 'groups',
+  whatsapp: 'chat',
+};
+
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
 
@@ -93,126 +101,226 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     }
   }
 
-  if (loading) return <div className="p-6 text-sm text-gray-500">Cargando…</div>;
-  if (error && !lead) return <div className="p-6 text-sm text-red-600">{error}</div>;
+  if (loading) return <div className="p-6 text-sm text-on-surface-variant">Cargando…</div>;
+  if (error && !lead) return <div className="p-6 text-sm text-error">{error}</div>;
   if (!lead) return null;
 
+  const etapaIdx = ETAPAS.findIndex((e) => e.value === lead.etapa);
+
   return (
-    <div className="mx-auto w-full max-w-2xl p-4 sm:p-6">
-      <Link href="/pipeline" className="text-sm text-blue-600 hover:underline">
-        ← Volver al pipeline
+    <div className="mx-auto w-full max-w-5xl p-4 sm:p-6">
+      <Link
+        href="/pipeline"
+        className="font-label mb-4 flex w-fit items-center gap-1 text-sm text-primary hover:underline"
+      >
+        <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+        Volver al pipeline
       </Link>
 
-      <h1 className="mt-2 text-xl font-semibold">{lead.negocio?.nombre}</h1>
-      {lead.negocio?.rubro && <p className="text-sm text-gray-500">{lead.negocio.rubro}</p>}
-      {lead.negocio?.direccion && <p className="text-sm text-gray-500">{lead.negocio.direccion}</p>}
-      <div className="mt-1 flex gap-3 text-sm">
-        {lead.negocio?.telefono && <span>📞 {lead.negocio.telefono}</span>}
-        {lead.negocio?.web && (
-          <a href={lead.negocio.web} target="_blank" rel="noreferrer" className="text-blue-600 underline">
-            {lead.negocio.web}
-          </a>
-        )}
-      </div>
+      {error && (
+        <p className="mb-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">{error}</p>
+      )}
 
-      {error && <p className="mt-3 rounded-md bg-red-50 p-2 text-sm text-red-700">{error}</p>}
-
-      <div className="mt-6 grid gap-4 rounded-lg border border-gray-200 p-4">
-        <div>
-          <label className="block text-xs font-medium text-gray-600">Etapa</label>
-          <select
-            value={lead.etapa}
-            onChange={(e) => actualizarLead({ etapa: e.target.value as Etapa })}
-            className="mt-1 w-full rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm"
-          >
-            {ETAPAS.map((et) => (
-              <option key={et.value} value={et.value}>
-                {et.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div>
-            <label className="block text-xs font-medium text-gray-600">Próxima acción</label>
-            <input
-              type="text"
-              defaultValue={lead.proxima_accion ?? ''}
-              onBlur={(e) => actualizarLead({ proxima_accion: e.target.value || null })}
-              className="mt-1 w-full rounded border border-gray-200 px-2 py-1.5 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600">Fecha</label>
-            <input
-              type="date"
-              defaultValue={lead.proxima_accion_fecha ?? ''}
-              onBlur={(e) => actualizarLead({ proxima_accion_fecha: e.target.value || null })}
-              className="mt-1 w-full rounded border border-gray-200 px-2 py-1.5 text-sm"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-600">Notas</label>
-          <textarea
-            defaultValue={lead.notas ?? ''}
-            onBlur={(e) => actualizarLead({ notas: e.target.value || null })}
-            rows={3}
-            className="mt-1 w-full rounded border border-gray-200 px-2 py-1.5 text-sm"
-          />
-        </div>
-        {guardando && <p className="text-xs text-gray-400">Guardando…</p>}
-      </div>
-
-      <div className="mt-6">
-        <h2 className="mb-2 text-sm font-semibold text-gray-700">Historial</h2>
-
-        <form onSubmit={agregarInteraccion} className="mb-4 flex flex-wrap gap-2">
-          <select
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value as TipoInteraccion)}
-            className="rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-sm"
-          >
-            {TIPOS_INTERACCION.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            placeholder="Agregar una nota…"
-            value={descripcion}
-            onChange={(e) => setDescripcion(e.target.value)}
-            className="min-w-[140px] flex-1 rounded border border-gray-200 px-2 py-1.5 text-sm"
-          />
-          <button
-            type="submit"
-            disabled={enviando || !descripcion.trim()}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-          >
-            {enviando ? 'Guardando…' : 'Agregar'}
-          </button>
-        </form>
-
-        <ul className="space-y-2">
-          {interacciones.map((i) => (
-            <li key={i.id} className="rounded border border-gray-200 p-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                  {TIPOS_INTERACCION.find((t) => t.value === i.tipo)?.label ?? i.tipo}
-                </span>
-                <span className="text-xs text-gray-400">
-                  {new Date(i.created_at).toLocaleString('es-AR')}
-                </span>
+      <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+        {/* Columna izquierda: identidad + acciones + campos editables */}
+        <div className="space-y-4">
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <div>
+                <h1 className="font-headline text-xl font-semibold text-on-surface">{lead.negocio?.nombre}</h1>
+                {lead.negocio?.rubro && (
+                  <p className="font-label mt-1 text-xs text-on-surface-variant">{lead.negocio.rubro}</p>
+                )}
               </div>
-              <p className="mt-1">{i.descripcion}</p>
-            </li>
-          ))}
-          {interacciones.length === 0 && <p className="text-sm text-gray-400">Sin interacciones todavía.</p>}
-        </ul>
+              <span className="font-label shrink-0 rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase text-on-secondary-container">
+                Activo
+              </span>
+            </div>
+
+            {lead.negocio?.direccion && (
+              <p className="font-label flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                {lead.negocio.direccion}
+              </p>
+            )}
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <a
+                href={lead.negocio?.telefono ? `tel:${lead.negocio.telefono}` : undefined}
+                aria-disabled={!lead.negocio?.telefono}
+                className={`flex flex-col items-center gap-1 rounded-lg bg-primary-container/30 py-3 font-label text-[11px] font-medium text-on-primary-container transition-opacity ${
+                  lead.negocio?.telefono ? 'hover:bg-primary-container/50' : 'pointer-events-none opacity-40'
+                }`}
+              >
+                <span className="material-symbols-outlined">call</span>
+                LLAMAR
+              </a>
+              <a
+                href={lead.negocio?.web ? `https://${lead.negocio.web.replace(/^https?:\/\//, '')}` : undefined}
+                target="_blank"
+                rel="noreferrer"
+                aria-disabled={!lead.negocio?.web}
+                className={`flex flex-col items-center gap-1 rounded-lg bg-primary-container/30 py-3 font-label text-[11px] font-medium text-on-primary-container transition-opacity ${
+                  lead.negocio?.web ? 'hover:bg-primary-container/50' : 'pointer-events-none opacity-40'
+                }`}
+              >
+                <span className="material-symbols-outlined">language</span>
+                SITIO WEB
+              </a>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+            <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
+              Etapa
+            </label>
+            <select
+              value={lead.etapa}
+              onChange={(e) => actualizarLead({ etapa: e.target.value as Etapa })}
+              className="mb-4 w-full rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
+            >
+              {ETAPAS.map((et) => (
+                <option key={et.value} value={et.value}>
+                  {et.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
+                  Próxima acción
+                </label>
+                <input
+                  type="text"
+                  defaultValue={lead.proxima_accion ?? ''}
+                  onBlur={(e) => actualizarLead({ proxima_accion: e.target.value || null })}
+                  className="w-full rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
+                  Fecha
+                </label>
+                <input
+                  type="date"
+                  defaultValue={lead.proxima_accion_fecha ?? ''}
+                  onBlur={(e) => actualizarLead({ proxima_accion_fecha: e.target.value || null })}
+                  className="w-full rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
+              Notas
+            </label>
+            <textarea
+              defaultValue={lead.notas ?? ''}
+              onBlur={(e) => actualizarLead({ notas: e.target.value || null })}
+              rows={3}
+              className="w-full rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
+            />
+            {guardando && <p className="font-label mt-2 text-xs text-on-surface-variant/70">Guardando…</p>}
+          </div>
+        </div>
+
+        {/* Columna derecha: stepper de etapa + historial */}
+        <div className="space-y-4">
+          <div className="overflow-x-auto rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+            <div className="flex min-w-max items-center">
+              {ETAPAS.map((et, i) => (
+                <div key={et.value} className="flex items-center">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <div
+                      className={`flex h-8 w-8 items-center justify-center rounded-full font-label text-xs font-bold ${
+                        i < etapaIdx
+                          ? 'bg-primary text-on-primary'
+                          : i === etapaIdx
+                            ? 'bg-primary-container text-on-primary-container ring-2 ring-primary'
+                            : 'bg-surface-container-highest text-on-surface-variant'
+                      }`}
+                    >
+                      {i < etapaIdx ? (
+                        <span className="material-symbols-outlined text-[16px]">check</span>
+                      ) : (
+                        i + 1
+                      )}
+                    </div>
+                    <span
+                      className={`font-label whitespace-nowrap text-[10px] ${
+                        i <= etapaIdx ? 'font-semibold text-on-surface' : 'text-on-surface-variant'
+                      }`}
+                    >
+                      {et.label}
+                    </span>
+                  </div>
+                  {i < ETAPAS.length - 1 && (
+                    <div className={`mx-1 h-0.5 w-8 ${i < etapaIdx ? 'bg-primary' : 'bg-surface-container-highest'}`} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
+            <h2 className="font-title mb-3 text-sm font-semibold text-on-surface">Historial</h2>
+
+            <form onSubmit={agregarInteraccion} className="mb-4 flex flex-wrap gap-2">
+              <select
+                value={tipo}
+                onChange={(e) => setTipo(e.target.value as TipoInteraccion)}
+                className="rounded-md border-0 bg-surface-container-low px-2 py-1.5 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
+              >
+                {TIPOS_INTERACCION.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+              <input
+                type="text"
+                placeholder="Agregar una nota…"
+                value={descripcion}
+                onChange={(e) => setDescripcion(e.target.value)}
+                className="min-w-[140px] flex-1 rounded-md border-0 bg-surface-container-low px-3 py-1.5 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
+              />
+              <button
+                type="submit"
+                disabled={enviando || !descripcion.trim()}
+                className="font-label rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
+              >
+                {enviando ? 'Guardando…' : 'Agregar'}
+              </button>
+            </form>
+
+            <div className="relative space-y-4">
+              {interacciones.map((i) => (
+                <div key={i.id} className="relative flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-container/40 text-on-primary-container">
+                      <span className="material-symbols-outlined text-[16px]">{ICONO_INTERACCION[i.tipo]}</span>
+                    </div>
+                    <div className="w-px flex-1 bg-outline-variant/20" />
+                  </div>
+                  <div className="flex-1 rounded-xl bg-surface-container-low p-3 pb-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-label text-xs font-semibold uppercase text-on-surface-variant">
+                        {TIPOS_INTERACCION.find((t) => t.value === i.tipo)?.label ?? i.tipo}
+                      </span>
+                      <span className="font-mono text-[11px] text-on-surface-variant/70">
+                        {new Date(i.created_at).toLocaleString('es-AR')}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-on-surface">{i.descripcion}</p>
+                  </div>
+                </div>
+              ))}
+              {interacciones.length === 0 && (
+                <p className="text-sm text-on-surface-variant/70">Sin interacciones todavía.</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

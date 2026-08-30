@@ -1,8 +1,14 @@
 PROSPECTOR - PROXIMOS PASOS
-(actualizado 2026-08-29)
+(actualizado 2026-08-30)
 
 PENDIENTE INMEDIATO
 --------------------
+0. Verificar visualmente /login: se rediseño el markup (mismo sistema de
+   diseño que el resto) pero no se pudo confirmar en vivo en esta sesion
+   sin cerrar la sesion autenticada del browser (y no tengo tu contraseña
+   para volver a entrar). Deberia verse bien - usa los mismos tokens ya
+   probados en las otras 6 pantallas - pero dale una mirada.
+
 1. (Opcional) Google Places API para "Enriquecer con Google":
    - Solo si querés completar telefono/web/rating de los negocios
    - Completar GOOGLE_MAPS_SERVER_API_KEY en .env.local (ver README)
@@ -23,6 +29,39 @@ PENDIENTE INMEDIATO
    en este caso puntual. No es un bug de datos, es un tema de que
    representa el numero. Si molesta, se puede arreglar sumando tambien
    los negocios "encontrados pero no nuevos" al conteo de esa zona.
+
+YA RESUELTO 2026-08-30
+------------------------
+- Rediseño completo de la UI con el sistema de diseño de Stitch (paleta
+  Material 3 pastel "Prospector", ver
+  stitch_prospector_geo_sales_ui_toolkit/prospector/DESIGN.md en el repo
+  de diseño): tokens de color en app/globals.css (Tailwind v4, @theme +
+  variables CSS con override bajo .dark), tipografia Hanken Grotesk
+  (titulos) / Inter (cuerpo) / Geist (labels) via next/font, iconos
+  Material Symbols Outlined.
+- Shell nuevo: sidebar fijo a la izquierda en desktop (components/
+  Sidebar.tsx) + bottom nav en mobile (components/BottomNav.tsx) +
+  topbar (components/TopBar.tsx), todo armado en app/layout.tsx.
+  Reemplaza el nav horizontal anterior.
+- Toggle de tema claro/oscuro manual (components/ThemeToggle.tsx),
+  persiste en localStorage ('prospector-theme'), con script inline en
+  el layout para evitar el flash del tema equivocado al cargar.
+- Elementos decorativos sin backend real (Upgrade, notificaciones, chat,
+  avatar) quedaron como decoracion inerte en el TopBar, a pedido
+  explicito - no hacen nada todavia, es solo para que calce visualmente
+  con los mockups de Stitch desde el dia uno.
+- Los 6 flujos reales (mapa, zonas, pipeline, dashboard, detalle de lead,
+  login) se reescribieron visualmente con el nuevo sistema mantiendo
+  toda la logica/funcionalidad intacta - no se toco ningun handler ni
+  llamada a la API, solo el markup/clases. /leads/[id] ahora tiene un
+  stepper visual de etapas y timeline de interacciones con iconos por
+  tipo (antes era una lista plana).
+- Verificado en el navegador: mapa (bulk actions, filtro por rubro,
+  dibujar zona), pipeline (drag & drop funcionando, agregar nota),
+  zonas, dashboard, detalle de lead, y mobile (390px) en las 6 pantallas
+  via un iframe inyectado en la misma sesion autenticada (la herramienta
+  de resize de ventana no funciona en este entorno). /login no se pudo
+  ver en vivo sin cerrar la sesion (ver PENDIENTE arriba).
 
 YA RESUELTO 2026-08-29
 ------------------------
