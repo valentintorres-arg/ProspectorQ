@@ -57,6 +57,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
       center: [-34.6037, -58.3816], // Buenos Aires. Ajustá si tu zona de trabajo es otra.
       zoom: 12,
       zoomControl: false, // se reemplaza por los botones +/- propios (estética del design system)
+      attributionControl: false, // a pedido: oculta el cartel "Leaflet | Tiles © Esri..."
     });
 
     // Esri "Light Gray Canvas": gratis, sin API key, estilo minimalista
