@@ -61,6 +61,7 @@ export interface Dictionary {
     onlyEnriched: string;
     onlyWithPhone: string;
     onlyWithWebsite: string;
+    onlyWithoutWebsite: string;
     freshnessAny: string;
     freshnessWeek: string;
     freshnessMonth: string;

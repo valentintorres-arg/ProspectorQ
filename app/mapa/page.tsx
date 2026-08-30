@@ -30,6 +30,7 @@ function MapaContent() {
   const [soloEnriquecidos, setSoloEnriquecidos] = useState(false);
   const [soloConTelefono, setSoloConTelefono] = useState(false);
   const [soloConWeb, setSoloConWeb] = useState(false);
+  const [soloSinWeb, setSoloSinWeb] = useState(false);
   // '' = todos, o un número de días (7/30) — "verificado hace <= N días"
   const [filtroFrescura, setFiltroFrescura] = useState('');
 
@@ -201,6 +202,7 @@ function MapaContent() {
         if (soloEnriquecidos && !n.enriquecido) return false;
         if (soloConTelefono && !n.telefono) return false;
         if (soloConWeb && !n.web) return false;
+        if (soloSinWeb && n.web) return false;
         if (filtroFrescura) {
           const dias = diasDesdeVerificacion(n.ultima_actualizacion);
           // Sin fecha de verificación = no podemos afirmar que esté al día,
@@ -209,7 +211,7 @@ function MapaContent() {
         }
         return true;
       }),
-    [resultados, busquedaNombre, filtroRubro, soloEnriquecidos, soloConTelefono, soloConWeb, filtroFrescura]
+    [resultados, busquedaNombre, filtroRubro, soloEnriquecidos, soloConTelefono, soloConWeb, soloSinWeb, filtroFrescura]
   );
 
   return (
@@ -296,6 +298,15 @@ function MapaContent() {
                   className="accent-primary"
                 />
                 {t.mapa.onlyWithWebsite}
+              </label>
+              <label className="font-label flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={soloSinWeb}
+                  onChange={(e) => setSoloSinWeb(e.target.checked)}
+                  className="accent-primary"
+                />
+                {t.mapa.onlyWithoutWebsite}
               </label>
               <select
                 value={filtroFrescura}

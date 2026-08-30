@@ -56,6 +56,7 @@ const en: Dictionary = {
     onlyEnriched: 'Enriched only',
     onlyWithPhone: 'Has phone',
     onlyWithWebsite: 'Has website',
+    onlyWithoutWebsite: 'No website',
     freshnessAny: 'Verified: any time',
     freshnessWeek: 'Verified in the last week',
     freshnessMonth: 'Verified in the last month',

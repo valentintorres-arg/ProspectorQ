@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Protege toda la app: sin sesión, redirige a /login (o devuelve 401 en /api).
 // `middleware.ts` fue renombrado a `proxy.ts` en Next.js 16 — misma API.
-const PUBLIC_PATHS = ['/login'];
+// /api/keepalive queda afuera porque lo pega el cron de Vercel (sin cookie
+// de sesión posible) — se autentica solo con CRON_SECRET, adentro del route.
+const PUBLIC_PATHS = ['/login', '/api/keepalive'];
 
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
