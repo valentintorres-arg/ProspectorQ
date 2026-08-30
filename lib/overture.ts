@@ -17,11 +17,18 @@ function getConnection(): Promise<duckdb.Connection> {
   return new Promise((resolve, reject) => {
     const db = new duckdb.Database(':memory:');
     const con = db.connect();
-    con.exec(`INSTALL httpfs; LOAD httpfs; SET s3_region='${REGION}';`, (err) => {
-      if (err) return reject(err);
-      connection = con;
-      resolve(con);
-    });
+    // En serverless (Vercel/Lambda) el $HOME por default no es escribible —
+    // solo /tmp lo es. Sin esto, INSTALL httpfs intenta bajar la extensión a
+    // ~/.duckdb y el proceso nativo muere sin tirar un error de JS atajable
+    // (502 sin body en vez de un error prolijo).
+    con.exec(
+      `SET home_directory='/tmp'; INSTALL httpfs; LOAD httpfs; SET s3_region='${REGION}';`,
+      (err) => {
+        if (err) return reject(err);
+        connection = con;
+        resolve(con);
+      }
+    );
   });
 }
 

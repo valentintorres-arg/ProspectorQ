@@ -5,6 +5,11 @@ import { sonElMismoNegocio } from '@/lib/dedup';
 import { buscarNegociosOverture } from '@/lib/overture';
 import type { Negocio } from '@/lib/types';
 
+// La consulta a Overture via DuckDB/httpfs puede tardar 15-30s (parquet
+// grande escaneado por HTTP range-requests) — el default de Vercel (10-15s
+// según plan) corta la función antes de que termine.
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
