@@ -54,6 +54,8 @@ const en: Dictionary = {
     searchByName: 'Search by name…',
     allCategories: 'All categories',
     onlyEnriched: 'Enriched only',
+    onlyWithPhone: 'Has phone',
+    onlyWithWebsite: 'Has website',
     freshnessAny: 'Verified: any time',
     freshnessWeek: 'Verified in the last week',
     freshnessMonth: 'Verified in the last month',

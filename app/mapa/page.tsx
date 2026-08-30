@@ -28,6 +28,8 @@ function MapaContent() {
   const [busquedaNombre, setBusquedaNombre] = useState('');
   const [filtroRubro, setFiltroRubro] = useState('');
   const [soloEnriquecidos, setSoloEnriquecidos] = useState(false);
+  const [soloConTelefono, setSoloConTelefono] = useState(false);
+  const [soloConWeb, setSoloConWeb] = useState(false);
   // '' = todos, o un número de días (7/30) — "verificado hace <= N días"
   const [filtroFrescura, setFiltroFrescura] = useState('');
 
@@ -197,6 +199,8 @@ function MapaContent() {
         if (busquedaNombre && !n.nombre.toLowerCase().includes(busquedaNombre.trim().toLowerCase())) return false;
         if (filtroRubro && n.rubro !== filtroRubro) return false;
         if (soloEnriquecidos && !n.enriquecido) return false;
+        if (soloConTelefono && !n.telefono) return false;
+        if (soloConWeb && !n.web) return false;
         if (filtroFrescura) {
           const dias = diasDesdeVerificacion(n.ultima_actualizacion);
           // Sin fecha de verificación = no podemos afirmar que esté al día,
@@ -205,7 +209,7 @@ function MapaContent() {
         }
         return true;
       }),
-    [resultados, busquedaNombre, filtroRubro, soloEnriquecidos, filtroFrescura]
+    [resultados, busquedaNombre, filtroRubro, soloEnriquecidos, soloConTelefono, soloConWeb, filtroFrescura]
   );
 
   return (
@@ -274,6 +278,24 @@ function MapaContent() {
                   className="accent-primary"
                 />
                 {t.mapa.onlyEnriched}
+              </label>
+              <label className="font-label flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={soloConTelefono}
+                  onChange={(e) => setSoloConTelefono(e.target.checked)}
+                  className="accent-primary"
+                />
+                {t.mapa.onlyWithPhone}
+              </label>
+              <label className="font-label flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={soloConWeb}
+                  onChange={(e) => setSoloConWeb(e.target.checked)}
+                  className="accent-primary"
+                />
+                {t.mapa.onlyWithWebsite}
               </label>
               <select
                 value={filtroFrescura}

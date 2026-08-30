@@ -59,6 +59,8 @@ export interface Dictionary {
     searchByName: string;
     allCategories: string;
     onlyEnriched: string;
+    onlyWithPhone: string;
+    onlyWithWebsite: string;
     freshnessAny: string;
     freshnessWeek: string;
     freshnessMonth: string;
