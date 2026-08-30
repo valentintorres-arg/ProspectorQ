@@ -4,6 +4,7 @@ import { use, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import Skeleton from '@/components/Skeleton';
 import { traducirRubro } from '@/lib/rubros';
+import { formatearFrescura } from '@/lib/freshness';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import {
   ETAPAS,
@@ -205,6 +206,23 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 {lead.negocio.direccion}
               </p>
             )}
+
+            {(() => {
+              const frescura = formatearFrescura(lead.negocio?.ultima_actualizacion ?? null, lang);
+              if (!frescura) return null;
+              return (
+                <p
+                  className={`font-label mt-1.5 flex items-center gap-1.5 text-xs ${
+                    frescura.stale ? 'text-error' : 'text-on-surface-variant'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[14px]">
+                    {frescura.stale ? 'warning' : 'verified'}
+                  </span>
+                  {frescura.texto}
+                </p>
+              );
+            })()}
 
             <div className="mt-4 grid grid-cols-2 gap-2">
               <a

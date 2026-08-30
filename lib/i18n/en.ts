@@ -60,7 +60,7 @@ const en: Dictionary = {
     adding: 'Adding…',
     noResultsYet: 'No results yet.',
     enriched: 'enriched',
-    basic: 'basic (OSM)',
+    basic: 'basic',
     enrichWithGoogle: 'Enrich with Google',
     addToPipeline: 'Add to pipeline',
     inPipeline: 'In pipeline ✓',

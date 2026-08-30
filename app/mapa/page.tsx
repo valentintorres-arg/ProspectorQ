@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { traducirRubro } from '@/lib/rubros';
+import { formatearFrescura } from '@/lib/freshness';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import type { Negocio } from '@/lib/types';
 
@@ -341,6 +342,22 @@ function MapaContent() {
                           {negocio.web}
                         </a>
                       )}
+                      {(() => {
+                        const frescura = formatearFrescura(negocio.ultima_actualizacion, lang);
+                        if (!frescura) return null;
+                        return (
+                          <p
+                            className={`font-label mt-0.5 flex items-center gap-1 text-xs ${
+                              frescura.stale ? 'text-error' : 'text-on-surface-variant'
+                            }`}
+                          >
+                            <span className="material-symbols-outlined text-[13px]">
+                              {frescura.stale ? 'warning' : 'verified'}
+                            </span>
+                            {frescura.texto}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                   <span

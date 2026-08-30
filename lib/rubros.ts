@@ -1,8 +1,11 @@
 // Traducción de rubros para mostrar en la UI. El valor que se guarda en
-// `negocios.rubro` es el tag crudo de OSM (shop=*, amenity=*, office=*,
-// craft=*) tal como lo devuelve Overpass — eso NO se toca, sigue siendo la
-// clave interna para filtrar/agrupar. Esto es solo la capa de traducción
-// para mostrárselo al usuario en español.
+// `negocios.rubro` es la categoría cruda tal como la devuelve la fuente
+// (categories.primary de Overture, antes tags de OSM) — eso NO se toca,
+// sigue siendo la clave interna para filtrar/agrupar. Esto es solo la capa
+// de traducción para mostrárselo al usuario en español. La taxonomía de
+// Overture tiene miles de categorías puntuales (ver
+// github.com/OvertureMaps/schema): solo mapeamos las más comunes vistas en
+// uso real, el resto cae en el fallback formateado en inglés.
 const TRADUCCIONES: Record<string, string> = {
   // amenity=*
   restaurant: 'Restaurante',
@@ -140,6 +143,44 @@ const TRADUCCIONES: Record<string, string> = {
   metal_construction: 'Herrería',
   upholsterer: 'Tapicero',
   gardener: 'Jardinero',
+
+  // categories.primary de Overture (taxonomía propia, no siempre coincide
+  // con los tags de OSM de arriba)
+  italian_restaurant: 'Restaurante italiano',
+  pizza_restaurant: 'Pizzería',
+  mexican_restaurant: 'Restaurante mexicano',
+  chinese_restaurant: 'Restaurante chino',
+  japanese_restaurant: 'Restaurante japonés',
+  seafood_restaurant: 'Marisquería',
+  steakhouse: 'Parrilla',
+  vegetarian_restaurant: 'Restaurante vegetariano',
+  breakfast_brunch_restaurant: 'Desayunos y brunch',
+  bakery_and_pastry_shop: 'Panadería',
+  ice_cream_shop: 'Heladería',
+  coffee_shop: 'Café',
+  brewery: 'Cervecería',
+  wine_bar: 'Vinoteca / Wine bar',
+  cocktail_bar: 'Coctelería',
+  dance_club: 'Boliche',
+  convenience_store: 'Almacén / Kiosco',
+  grocery_store: 'Almacén',
+  shoe_store: 'Zapatería',
+  fashion: 'Tienda de ropa',
+  hair_salon: 'Peluquería',
+  nail_salon: 'Salón de uñas',
+  spa: 'Spa',
+  gym_and_fitness_center: 'Gimnasio',
+  hotel: 'Hotel',
+  auto_repair: 'Taller mecánico',
+  gas_station: 'Estación de servicio',
+  professional_services: 'Servicios profesionales',
+  architectural_designer: 'Estudio de arquitectura',
+  money_transfer_services: 'Envío de dinero',
+  insurance_agency: 'Seguros',
+  central_government_office: 'Oficina gubernamental',
+  local_government_office: 'Oficina gubernamental',
+  medical_clinic: 'Clínica',
+  veterinarian: 'Veterinaria',
 };
 
 // Fallback para tags sin traducción cargada: "fast_food" -> "Fast food"

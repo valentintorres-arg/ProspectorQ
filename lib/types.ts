@@ -1,4 +1,4 @@
-export type Fuente = 'osm' | 'google';
+export type Fuente = 'osm' | 'google' | 'overture';
 
 export type Etapa =
   | 'identificado'
@@ -39,8 +39,13 @@ export interface Negocio {
   fuente: Fuente;
   osm_id: string | null;
   google_place_id: string | null;
+  overture_id: string | null;
   rating: number | null;
   enriquecido: boolean;
+  // Fecha del dato fuente más reciente (no de cuándo lo insertamos nosotros).
+  // Sirve para desconfiar de negocios que nadie verificó hace mucho tiempo
+  // (posible cierre). Solo lo completa la fuente Overture por ahora.
+  ultima_actualizacion: string | null;
   created_at: string;
 }
 
