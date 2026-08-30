@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Skeleton from '@/components/Skeleton';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import type { Zona } from '@/lib/types';
 
 export default function ZonasPage() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [zonas, setZonas] = useState<Zona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -16,15 +18,16 @@ export default function ZonasPage() {
       try {
         const res = await fetch('/api/zonas');
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'Error cargando zonas');
+        if (!res.ok) throw new Error(data.error ?? t.zonas.errorLoading);
         setZonas(data.zonas ?? []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error inesperado');
+        setError(err instanceof Error ? err.message : t.zonas.unexpectedError);
       } finally {
         setLoading(false);
       }
     }
     cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) return <div className="p-6 text-sm text-error">{error}</div>;
@@ -58,22 +61,18 @@ export default function ZonasPage() {
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-headline text-2xl font-semibold text-on-surface">Zonas guardadas</h1>
+        <h1 className="font-headline text-2xl font-semibold text-on-surface">{t.zonas.title}</h1>
         <button
           onClick={() => router.push('/mapa')}
           className="font-label flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90"
         >
           <span className="material-symbols-outlined text-[18px]">add</span>
-          Nueva zona
+          {t.zonas.newZone}
         </button>
       </div>
-      <p className="mb-6 text-sm text-on-surface-variant">
-        Administrá y volvé a escanear tus áreas de prospección guardadas.
-      </p>
+      <p className="mb-6 text-sm text-on-surface-variant">{t.zonas.subtitle}</p>
 
-      {zonas.length === 0 && (
-        <p className="text-sm text-on-surface-variant/70">Todavía no dibujaste ninguna zona en el mapa.</p>
-      )}
+      {zonas.length === 0 && <p className="text-sm text-on-surface-variant/70">{t.zonas.noZonesYet}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {zonas.map((zona) => (
@@ -84,18 +83,18 @@ export default function ZonasPage() {
             <div className="mb-1 flex items-start justify-between gap-2">
               <p className="font-title text-base font-semibold text-on-surface">{zona.nombre}</p>
               <span className="font-label shrink-0 rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase text-on-secondary-container">
-                Activa
+                {t.zonas.active}
               </span>
             </div>
             <p className="font-label flex items-center gap-1 text-xs text-on-surface-variant">
               <span className="material-symbols-outlined text-[14px]">calendar_today</span>
-              {new Date(zona.created_at).toLocaleString('es-AR')}
+              {new Date(zona.created_at).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')}
             </p>
 
             <p className="mt-4">
               <span className="font-headline text-3xl font-bold text-primary">{zona.negocios_count}</span>{' '}
               <span className="text-sm text-on-surface-variant">
-                {zona.negocios_count === 1 ? 'negocio encontrado' : 'negocios encontrados'}
+                {t.zonas.businessesFoundLabel(zona.negocios_count)}
               </span>
             </p>
 
@@ -104,7 +103,7 @@ export default function ZonasPage() {
               className="font-label mt-4 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-fixed px-3 py-2 text-xs font-medium text-on-primary-fixed-variant hover:bg-primary-fixed-dim"
             >
               <span className="material-symbols-outlined text-[16px]">my_location</span>
-              Ver y volver a buscar
+              {t.zonas.viewAndReSearch}
             </button>
           </div>
         ))}

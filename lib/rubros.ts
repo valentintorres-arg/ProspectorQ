@@ -143,6 +143,8 @@ const TRADUCCIONES: Record<string, string> = {
 };
 
 // Fallback para tags sin traducción cargada: "fast_food" -> "Fast food"
+// (también es lo que se usa siempre en inglés: el tag de OSM ya es inglés,
+// solo hace falta formatearlo prolijo).
 function formatearFallback(rubro: string): string {
   return rubro
     .split('_')
@@ -150,7 +152,8 @@ function formatearFallback(rubro: string): string {
     .join(' ');
 }
 
-export function traducirRubro(rubro: string | null | undefined): string {
+export function traducirRubro(rubro: string | null | undefined, lang: 'es' | 'en' = 'es'): string {
   if (!rubro) return '';
+  if (lang === 'en') return formatearFallback(rubro);
   return TRADUCCIONES[rubro] ?? formatearFallback(rubro);
 }

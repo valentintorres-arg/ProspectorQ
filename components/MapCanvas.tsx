@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import type { Negocio } from '@/lib/types';
 
 interface MapCanvasProps {
@@ -34,6 +35,7 @@ function geoJSONToLatLngs(polygon: GeoJSON.Polygon): L.LatLng[] {
 }
 
 export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPolygon }: MapCanvasProps) {
+  const { t } = useLanguage();
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const draftPolygonRef = useRef<L.Polygon | null>(null);
@@ -224,25 +226,25 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
                 className="font-label flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-medium text-on-primary hover:opacity-90"
               >
                 <span className="material-symbols-outlined text-[16px]">draw</span>
-                Dibujar zona
+                {t.mapCanvas.drawZone}
               </button>
             ) : (
               <>
                 <span className="font-label text-xs text-on-surface-variant">
-                  {puntos < 3 ? `Marcá al menos 3 puntos (${puntos})` : `${puntos} puntos`}
+                  {puntos < 3 ? t.mapCanvas.markAtLeast(puntos) : t.mapCanvas.pointsCount(puntos)}
                 </span>
                 <button
                   onClick={cerrarZona}
                   disabled={puntos < 3}
                   className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-40"
                 >
-                  Cerrar zona
+                  {t.mapCanvas.closeZone}
                 </button>
                 <button
                   onClick={cancelarDibujo}
                   className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80"
                 >
-                  Cancelar
+                  {t.mapCanvas.cancel}
                 </button>
               </>
             )}
@@ -252,7 +254,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
 
       {buscando && (
         <div className="absolute left-1/2 top-16 z-[1000] -translate-x-1/2 rounded-full border border-outline-variant/10 bg-surface px-4 py-1.5 text-sm text-on-surface-variant shadow-sm">
-          Buscando negocios en la zona…
+          {t.mapCanvas.searching}
         </div>
       )}
     </div>

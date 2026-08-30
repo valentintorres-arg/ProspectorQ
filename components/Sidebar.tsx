@@ -3,14 +3,9 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createBrowserSupabase } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import ThemeToggle from './ThemeToggle';
-
-const NAV_ITEMS = [
-  { href: '/mapa', label: 'Mapa', icon: 'map' },
-  { href: '/zonas', label: 'Zonas', icon: 'layers' },
-  { href: '/pipeline', label: 'Pipeline', icon: 'view_kanban' },
-  { href: '/dashboard', label: 'Dashboard', icon: 'bar_chart' },
-];
+import LanguageToggle from './LanguageToggle';
 
 interface SidebarProps {
   email: string;
@@ -21,6 +16,14 @@ interface SidebarProps {
 export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { t } = useLanguage();
+
+  const NAV_ITEMS = [
+    { href: '/mapa', label: t.nav.mapa, icon: 'map' },
+    { href: '/zonas', label: t.nav.zonas, icon: 'layers' },
+    { href: '/pipeline', label: t.nav.pipeline, icon: 'view_kanban' },
+    { href: '/dashboard', label: t.nav.dashboard, icon: 'bar_chart' },
+  ];
 
   async function handleLogout() {
     const supabase = createBrowserSupabase();
@@ -39,8 +42,8 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
         <button
           type="button"
           onClick={onToggleCollapse}
-          aria-label={collapsed ? 'Expandir menú' : 'Colapsar menú'}
-          title={collapsed ? 'Expandir menú' : undefined}
+          aria-label={collapsed ? t.nav.expandMenu : t.nav.collapseMenu}
+          title={collapsed ? t.nav.expandMenu : undefined}
           className="flex min-w-0 items-center gap-3 rounded-lg transition-transform duration-150 hover:scale-[1.03] active:scale-95"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-container">
@@ -51,9 +54,7 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
               <span className="font-headline block text-lg font-semibold tracking-tight text-primary">
                 Prospector
               </span>
-              <span className="font-label block truncate text-xs text-on-surface-variant">
-                Prospección geo B2B
-              </span>
+              <span className="font-label block truncate text-xs text-on-surface-variant">{t.nav.tagline}</span>
             </span>
           )}
         </button>
@@ -62,7 +63,7 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
           <button
             type="button"
             onClick={onToggleCollapse}
-            aria-label="Colapsar menú"
+            aria-label={t.nav.collapseMenu}
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors duration-150 hover:bg-surface-container-highest hover:text-primary"
           >
             <span className="material-symbols-outlined text-[20px]">chevron_left</span>
@@ -109,28 +110,34 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
       <div className="mb-4 mt-auto">
         <Link
           href="/mapa"
-          title={collapsed ? 'Nueva zona' : undefined}
+          title={collapsed ? t.nav.newZone : undefined}
           className={`flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 font-medium text-on-primary shadow-sm transition-all duration-150 hover:opacity-90 hover:shadow-md active:scale-[0.98] ${
             collapsed ? 'px-0' : 'px-4'
           }`}
         >
           <span className="material-symbols-outlined">add</span>
-          {!collapsed && 'Nueva zona'}
+          {!collapsed && t.nav.newZone}
         </Link>
       </div>
 
-      <div className="flex flex-col gap-1 border-t border-outline-variant/10 pt-4">
-        <div className={`flex items-center px-2 py-1 ${collapsed ? 'flex-col gap-2 px-0' : 'justify-between'}`}>
-          {!collapsed && (
-            <span className="font-label truncate text-xs text-on-surface-variant" title={email}>
-              {email}
-            </span>
-          )}
+      <div className="flex flex-col gap-2 border-t border-outline-variant/10 pt-4">
+        {!collapsed && (
+          <span
+            className="font-label truncate px-2 text-xs text-on-surface-variant"
+            title={email}
+          >
+            {email}
+          </span>
+        )}
+
+        <div className={`flex items-center gap-2 px-2 ${collapsed ? 'flex-col' : ''}`}>
+          <LanguageToggle />
           <ThemeToggle />
         </div>
+
         <button
           onClick={handleLogout}
-          title={collapsed ? 'Cerrar sesión' : undefined}
+          title={collapsed ? t.nav.logout : undefined}
           className={`group flex items-center gap-3 rounded-lg py-1.5 text-left transition-colors duration-150 hover:bg-surface-container-highest/60 ${
             collapsed ? 'justify-center px-0' : 'px-2'
           }`}
@@ -140,7 +147,7 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
           </span>
           {!collapsed && (
             <span className="font-label text-xs text-on-surface-variant transition-colors duration-150 group-hover:text-error">
-              Cerrar sesión
+              {t.nav.logout}
             </span>
           )}
         </button>

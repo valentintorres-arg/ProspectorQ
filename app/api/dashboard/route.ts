@@ -22,10 +22,12 @@ export async function GET() {
       return NextResponse.json({ error: 'No se pudieron calcular las métricas' }, { status: 500 });
     }
 
-    const porEtapa = ETAPAS.map((e) => ({
-      etapa: e.value,
-      label: e.label,
-      count: (leadsRes.data ?? []).filter((l) => l.etapa === e.value).length,
+    // Sin "label": el nombre de la etapa para mostrar se resuelve en el
+    // cliente vía t.etapas[etapa] (el idioma es una preferencia del
+    // browser, no algo que el server deba decidir).
+    const porEtapa = ETAPAS.map((etapa) => ({
+      etapa,
+      count: (leadsRes.data ?? []).filter((l) => l.etapa === etapa).length,
     }));
 
     const rubroCounts = new Map<string, number>();

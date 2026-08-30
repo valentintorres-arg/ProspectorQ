@@ -3,10 +3,12 @@
 import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserSupabase } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +25,7 @@ function LoginForm() {
 
     if (error) {
       setLoading(false);
-      setError('Email o contraseña incorrectos');
+      setError(t.login.invalidCredentials);
       return;
     }
 
@@ -41,7 +43,7 @@ function LoginForm() {
           <span className="material-symbols-outlined text-[28px] text-on-primary-container">radar</span>
         </div>
         <h1 className="font-headline text-2xl font-semibold text-primary">Prospector</h1>
-        <p className="mt-1 text-sm text-on-surface-variant">Iniciá sesión para continuar.</p>
+        <p className="mt-1 text-sm text-on-surface-variant">{t.login.tagline}</p>
       </div>
 
       {error && (
@@ -50,7 +52,7 @@ function LoginForm() {
 
       <div className="mb-4">
         <label htmlFor="email" className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
-          Email
+          {t.login.email}
         </label>
         <div className="relative">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">
@@ -61,7 +63,7 @@ function LoginForm() {
             type="email"
             required
             autoComplete="email"
-            placeholder="nombre@empresa.com"
+            placeholder={t.login.emailPlaceholder}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-md border-0 bg-surface-container-low py-2.5 pl-10 pr-3 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
@@ -74,7 +76,7 @@ function LoginForm() {
           htmlFor="password"
           className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant"
         >
-          Contraseña
+          {t.login.password}
         </label>
         <div className="relative">
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">
@@ -92,7 +94,7 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-label={showPassword ? t.login.hidePassword : t.login.showPassword}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-on-surface-variant"
           >
             <span className="material-symbols-outlined text-[18px]">
@@ -107,7 +109,7 @@ function LoginForm() {
         disabled={loading}
         className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-medium text-on-primary transition-opacity hover:opacity-90 disabled:opacity-50"
       >
-        {loading ? 'Ingresando…' : 'Ingresar'}
+        {loading ? t.login.submitting : t.login.submit}
       </button>
     </form>
   );

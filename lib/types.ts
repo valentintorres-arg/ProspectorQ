@@ -8,13 +8,15 @@ export type Etapa =
   | 'ganado'
   | 'perdido';
 
-export const ETAPAS: { value: Etapa; label: string }[] = [
-  { value: 'identificado', label: 'Identificado' },
-  { value: 'contactado', label: 'Contactado' },
-  { value: 'en_conversacion', label: 'En conversación' },
-  { value: 'propuesta', label: 'Propuesta enviada' },
-  { value: 'ganado', label: 'Ganado' },
-  { value: 'perdido', label: 'Perdido' },
+// Solo los valores (claves internas, nunca se muestran tal cual): el label
+// para mostrar se resuelve por idioma vía t.etapas[value] (ver lib/i18n).
+export const ETAPAS: Etapa[] = [
+  'identificado',
+  'contactado',
+  'en_conversacion',
+  'propuesta',
+  'ganado',
+  'perdido',
 ];
 
 export interface Zona {
@@ -56,13 +58,8 @@ export interface Lead {
 
 export type TipoInteraccion = 'nota' | 'llamada' | 'mail' | 'reunion' | 'whatsapp';
 
-export const TIPOS_INTERACCION: { value: TipoInteraccion; label: string }[] = [
-  { value: 'nota', label: 'Nota' },
-  { value: 'llamada', label: 'Llamada' },
-  { value: 'mail', label: 'Mail' },
-  { value: 'reunion', label: 'Reunión' },
-  { value: 'whatsapp', label: 'WhatsApp' },
-];
+// Ídem ETAPAS: solo valores, el label sale de t.interacciones[value].
+export const TIPOS_INTERACCION: TipoInteraccion[] = ['nota', 'llamada', 'mail', 'reunion', 'whatsapp'];
 
 export interface Interaccion {
   id: string;

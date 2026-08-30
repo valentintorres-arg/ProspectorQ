@@ -2,16 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-const NAV_ITEMS = [
-  { href: '/mapa', label: 'Mapa', icon: 'map' },
-  { href: '/zonas', label: 'Zonas', icon: 'layers' },
-  { href: '/pipeline', label: 'Pipeline', icon: 'view_kanban' },
-  { href: '/dashboard', label: 'Stats', icon: 'bar_chart' },
-];
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 
 export default function BottomNav() {
   const pathname = usePathname();
+  const { t } = useLanguage();
+
+  const NAV_ITEMS = [
+    { href: '/mapa', label: t.nav.mapa, icon: 'map' },
+    { href: '/zonas', label: t.nav.zonas, icon: 'layers' },
+    { href: '/pipeline', label: t.nav.pipeline, icon: 'view_kanban' },
+    { href: '/dashboard', label: t.nav.dashboardShort, icon: 'bar_chart' },
+  ];
 
   return (
     <nav className="flex h-16 shrink-0 items-center justify-around border-t border-outline-variant/10 bg-surface-container-low md:hidden">

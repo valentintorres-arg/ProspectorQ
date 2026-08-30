@@ -4,6 +4,7 @@ import { use, useEffect, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import Skeleton from '@/components/Skeleton';
 import { traducirRubro } from '@/lib/rubros';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import {
   ETAPAS,
   TIPOS_INTERACCION,
@@ -23,6 +24,7 @@ const ICONO_INTERACCION: Record<TipoInteraccion, string> = {
 
 export default function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const { lang, t } = useLanguage();
 
   const [lead, setLead] = useState<Lead | null>(null);
   const [interacciones, setInteracciones] = useState<Interaccion[]>([]);
@@ -38,11 +40,11 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     try {
       const res = await fetch(`/api/leads/${id}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error cargando el lead');
+      if (!res.ok) throw new Error(data.error ?? t.leadDetail.errorLoading);
       setLead(data.lead);
       setInteracciones(data.interacciones ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.leadDetail.unexpectedError);
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           notas: update.notas,
         }),
       });
-      if (!res.ok) throw new Error('No se pudo guardar');
+      if (!res.ok) throw new Error(t.leadDetail.errorSaving);
     } catch {
       cargar();
     } finally {
@@ -93,11 +95,11 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         body: JSON.stringify({ tipo, descripcion }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error agregando la interacción');
+      if (!res.ok) throw new Error(data.error ?? t.leadDetail.errorAddingInteraction);
       setInteracciones((prev) => [data.interaccion, ...prev]);
       setDescripcion('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.leadDetail.unexpectedError);
     } finally {
       setEnviando(false);
     }
@@ -161,7 +163,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const etapaIdx = ETAPAS.findIndex((e) => e.value === lead.etapa);
+  const etapaIdx = ETAPAS.findIndex((e) => e === lead.etapa);
 
   return (
     <div className="w-full p-4 sm:p-6">
@@ -172,7 +174,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         <span className="material-symbols-outlined text-[20px] transition-transform duration-150 group-hover:-translate-x-0.5">
           chevron_left
         </span>
-        Volver al pipeline
+        {t.leadDetail.backToPipeline}
       </Link>
 
       {error && (
@@ -187,11 +189,13 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               <div>
                 <h1 className="font-headline text-xl font-semibold text-on-surface">{lead.negocio?.nombre}</h1>
                 {lead.negocio?.rubro && (
-                  <p className="font-label mt-1 text-xs text-on-surface-variant">{traducirRubro(lead.negocio.rubro)}</p>
+                  <p className="font-label mt-1 text-xs text-on-surface-variant">
+                    {traducirRubro(lead.negocio.rubro, lang)}
+                  </p>
                 )}
               </div>
               <span className="font-label shrink-0 rounded-full bg-secondary-container px-2 py-0.5 text-[10px] font-bold uppercase text-on-secondary-container">
-                Activo
+                {t.leadDetail.active}
               </span>
             </div>
 
@@ -211,7 +215,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 }`}
               >
                 <span className="material-symbols-outlined">call</span>
-                LLAMAR
+                {t.leadDetail.call.toUpperCase()}
               </a>
               <a
                 href={lead.negocio?.web ? `https://${lead.negocio.web.replace(/^https?:\/\//, '')}` : undefined}
@@ -223,14 +227,14 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 }`}
               >
                 <span className="material-symbols-outlined">language</span>
-                SITIO WEB
+                {t.leadDetail.website.toUpperCase()}
               </a>
             </div>
           </div>
 
           <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
             <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
-              Etapa
+              {t.leadDetail.stage}
             </label>
             <select
               value={lead.etapa}
@@ -238,8 +242,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               className="mb-4 w-full rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
             >
               {ETAPAS.map((et) => (
-                <option key={et.value} value={et.value}>
-                  {et.label}
+                <option key={et} value={et}>
+                  {t.etapas[et]}
                 </option>
               ))}
             </select>
@@ -247,7 +251,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
-                  Próxima acción
+                  {t.leadDetail.nextAction}
                 </label>
                 <input
                   type="text"
@@ -258,7 +262,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               </div>
               <div>
                 <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
-                  Fecha
+                  {t.leadDetail.date}
                 </label>
                 <input
                   type="date"
@@ -270,7 +274,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
             </div>
 
             <label className="font-label mb-1 block text-xs uppercase tracking-wide text-on-surface-variant">
-              Notas
+              {t.leadDetail.notes}
             </label>
             <textarea
               defaultValue={lead.notas ?? ''}
@@ -278,7 +282,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
               rows={3}
               className="w-full rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
             />
-            {guardando && <p className="font-label mt-2 text-xs text-on-surface-variant/70">Guardando…</p>}
+            {guardando && <p className="font-label mt-2 text-xs text-on-surface-variant/70">{t.leadDetail.saving}</p>}
           </div>
         </div>
 
@@ -287,7 +291,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           <div className="overflow-x-auto rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
             <div className="flex min-w-max items-center">
               {ETAPAS.map((et, i) => (
-                <div key={et.value} className="flex items-center">
+                <div key={et} className="flex items-center">
                   <div className="flex flex-col items-center gap-1.5">
                     <div
                       className={`flex h-8 w-8 items-center justify-center rounded-full font-label text-xs font-bold ${
@@ -309,7 +313,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                         i <= etapaIdx ? 'font-semibold text-on-surface' : 'text-on-surface-variant'
                       }`}
                     >
-                      {et.label}
+                      {t.etapas[et]}
                     </span>
                   </div>
                   {i < ETAPAS.length - 1 && (
@@ -321,7 +325,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-5">
-            <h2 className="font-title mb-3 text-sm font-semibold text-on-surface">Historial</h2>
+            <h2 className="font-title mb-3 text-sm font-semibold text-on-surface">{t.leadDetail.history}</h2>
 
             <form onSubmit={agregarInteraccion} className="mb-4 flex flex-wrap gap-2">
               <select
@@ -329,15 +333,15 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 onChange={(e) => setTipo(e.target.value as TipoInteraccion)}
                 className="rounded-md border-0 bg-surface-container-low px-2 py-1.5 text-sm text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
               >
-                {TIPOS_INTERACCION.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
+                {TIPOS_INTERACCION.map((tipoOpt) => (
+                  <option key={tipoOpt} value={tipoOpt}>
+                    {t.interacciones[tipoOpt]}
                   </option>
                 ))}
               </select>
               <input
                 type="text"
-                placeholder="Agregar una nota…"
+                placeholder={t.leadDetail.addNotePlaceholder}
                 value={descripcion}
                 onChange={(e) => setDescripcion(e.target.value)}
                 className="min-w-[140px] flex-1 rounded-md border-0 bg-surface-container-low px-3 py-1.5 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
@@ -347,7 +351,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 disabled={enviando || !descripcion.trim()}
                 className="font-label rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
               >
-                {enviando ? 'Guardando…' : 'Agregar'}
+                {enviando ? t.leadDetail.adding : t.leadDetail.add}
               </button>
             </form>
 
@@ -363,10 +367,10 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                   <div className="flex-1 rounded-xl bg-surface-container-low p-3 pb-4">
                     <div className="flex items-center justify-between gap-2">
                       <span className="font-label text-xs font-semibold uppercase text-on-surface-variant">
-                        {TIPOS_INTERACCION.find((t) => t.value === i.tipo)?.label ?? i.tipo}
+                        {t.interacciones[i.tipo]}
                       </span>
                       <span className="font-mono text-[11px] text-on-surface-variant/70">
-                        {new Date(i.created_at).toLocaleString('es-AR')}
+                        {new Date(i.created_at).toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')}
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-on-surface">{i.descripcion}</p>
@@ -374,7 +378,7 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
                 </div>
               ))}
               {interacciones.length === 0 && (
-                <p className="text-sm text-on-surface-variant/70">Sin interacciones todavía.</p>
+                <p className="text-sm text-on-surface-variant/70">{t.leadDetail.noInteractionsYet}</p>
               )}
             </div>
           </div>

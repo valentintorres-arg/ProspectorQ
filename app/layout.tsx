@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Hanken_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { getUser } from "@/lib/supabase/auth-server";
+import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
 import AppShell from "@/components/AppShell";
 
 const geist = Geist({ subsets: ["latin"], weight: "variable", variable: "--font-geist" });
@@ -19,13 +20,17 @@ export const metadata: Metadata = {
 
 // Corre antes del primer paint para evitar el flash de tema equivocado:
 // respeta la preferencia guardada, o el sistema operativo si nunca se tocó
-// el toggle manual.
-const THEME_INIT_SCRIPT = `
+// el toggle manual. De paso deja <html lang> correcto desde el arranque.
+const INIT_SCRIPT = `
 (function () {
   try {
-    var stored = localStorage.getItem('prospector-theme');
-    var dark = stored ? stored === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var storedTheme = localStorage.getItem('prospector-theme');
+    var dark = storedTheme ? storedTheme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (dark) document.documentElement.classList.add('dark');
+  } catch (e) {}
+  try {
+    var storedLang = localStorage.getItem('prospector-lang');
+    if (storedLang === 'en' || storedLang === 'es') document.documentElement.lang = storedLang;
   } catch (e) {}
 })();
 `;
@@ -47,14 +52,16 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full bg-surface font-body text-on-surface" suppressHydrationWarning>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-        {!user ? (
-          <main className="flex min-h-screen flex-col bg-gradient-to-br from-surface via-surface to-primary-container/20">
-            {children}
-          </main>
-        ) : (
-          <AppShell email={user.email ?? ''}>{children}</AppShell>
-        )}
+        <script dangerouslySetInnerHTML={{ __html: INIT_SCRIPT }} />
+        <LanguageProvider>
+          {!user ? (
+            <main className="flex min-h-screen flex-col bg-gradient-to-br from-surface via-surface to-primary-container/20">
+              {children}
+            </main>
+          ) : (
+            <AppShell email={user.email ?? ''}>{children}</AppShell>
+          )}
+        </LanguageProvider>
       </body>
     </html>
   );

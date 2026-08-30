@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { traducirRubro } from '@/lib/rubros';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import type { Negocio } from '@/lib/types';
 
 // Leaflet toca el DOM directamente, así que no puede renderizarse en el servidor.
@@ -13,6 +14,7 @@ const MapCanvas = dynamic(() => import('@/components/MapCanvas'), { ssr: false }
 function MapaContent() {
   const searchParams = useSearchParams();
   const zonaId = searchParams.get('zonaId');
+  const { lang, t } = useLanguage();
 
   const [resultados, setResultados] = useState<Negocio[]>([]);
   const [buscando, setBuscando] = useState(false);
@@ -38,14 +40,14 @@ function MapaContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           polygon,
-          nombreZona: nombreZona ?? `Zona ${new Date().toLocaleString('es-AR')}`,
+          nombreZona: nombreZona ?? t.mapa.defaultZoneName(new Date().toLocaleString(lang === 'en' ? 'en-US' : 'es-AR')),
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error buscando la zona');
+      if (!res.ok) throw new Error(data.error ?? t.mapa.errorSearching);
       setResultados(data.negocios ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.mapa.unexpectedError);
     } finally {
       setBuscando(false);
     }
@@ -61,13 +63,16 @@ function MapaContent() {
       try {
         const res = await fetch(`/api/zonas/${zonaId}`);
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? 'No se pudo cargar la zona');
+        if (!res.ok) throw new Error(data.error ?? t.mapa.errorLoadingZone);
         if (cancelado) return;
         setInitialPolygon(data.polygon);
         setNombreZonaCargada(data.nombre);
-        handleZoneDrawn(data.polygon, `${data.nombre} (re-búsqueda ${new Date().toLocaleDateString('es-AR')})`);
+        handleZoneDrawn(
+          data.polygon,
+          t.mapa.reSearchZoneName(data.nombre, new Date().toLocaleDateString(lang === 'en' ? 'en-US' : 'es-AR'))
+        );
       } catch (err) {
-        if (!cancelado) setError(err instanceof Error ? err.message : 'Error inesperado');
+        if (!cancelado) setError(err instanceof Error ? err.message : t.mapa.unexpectedError);
       }
     }
     cargarZona();
@@ -75,6 +80,7 @@ function MapaContent() {
     return () => {
       cancelado = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zonaId]);
 
   async function handleEnriquecer(id: string) {
@@ -86,13 +92,13 @@ function MapaContent() {
         body: JSON.stringify({ negocioIds: [id] }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error enriqueciendo');
+      if (!res.ok) throw new Error(data.error ?? t.mapa.errorEnriching);
       const actualizado: Negocio | undefined = data.actualizados?.[0];
       if (actualizado) {
         setResultados((prev) => prev.map((n) => (n.id === id ? actualizado : n)));
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.mapa.unexpectedError);
     } finally {
       setEnriqueciendoIds((prev) => {
         const next = new Set(prev);
@@ -110,10 +116,10 @@ function MapaContent() {
         body: JSON.stringify({ negocioId: id }),
       });
       const data = await res.json();
-      if (!res.ok && res.status !== 409) throw new Error(data.error ?? 'Error agregando al pipeline');
+      if (!res.ok && res.status !== 409) throw new Error(data.error ?? t.mapa.errorAddingToPipeline);
       setAgregadosIds((prev) => new Set(prev).add(id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.mapa.unexpectedError);
     }
   }
 
@@ -139,13 +145,13 @@ function MapaContent() {
         body: JSON.stringify({ negocioIds: ids }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error enriqueciendo');
+      if (!res.ok) throw new Error(data.error ?? t.mapa.errorEnriching);
       const actualizados: Negocio[] = data.actualizados ?? [];
       setResultados((prev) =>
         prev.map((n) => actualizados.find((a) => a.id === n.id) ?? n)
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.mapa.unexpectedError);
     } finally {
       setBulkEnriqueciendo(false);
     }
@@ -162,7 +168,7 @@ function MapaContent() {
         body: JSON.stringify({ negocioIds: ids }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error agregando al pipeline');
+      if (!res.ok) throw new Error(data.error ?? t.mapa.errorAddingToPipeline);
       setAgregadosIds((prev) => {
         const next = new Set(prev);
         ids.forEach((id) => next.add(id));
@@ -170,7 +176,7 @@ function MapaContent() {
       });
       setSeleccionados(new Set());
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.mapa.unexpectedError);
     } finally {
       setBulkAgregando(false);
     }
@@ -205,15 +211,13 @@ function MapaContent() {
       <aside className="flex min-h-[300px] flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant/20 bg-surface md:w-96 md:flex-none">
         <div className="border-b border-outline-variant/10 bg-surface-container-low/50 p-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-title text-base font-semibold text-on-surface">Resultados</h2>
+            <h2 className="font-title text-base font-semibold text-on-surface">{t.mapa.results}</h2>
             <Link href="/zonas" className="font-label text-xs text-primary hover:underline">
-              Ver zonas guardadas
+              {t.mapa.viewSavedZones}
             </Link>
           </div>
           <p className="mt-1 text-sm text-on-surface-variant">
-            {nombreZonaCargada
-              ? `Volviendo a buscar sobre "${nombreZonaCargada}".`
-              : 'Dibujá un polígono en el mapa (botón de dibujo arriba del mapa) para buscar negocios en esa zona.'}
+            {nombreZonaCargada ? t.mapa.reSearching(nombreZonaCargada) : t.mapa.drawPrompt}
           </p>
         </div>
 
@@ -229,10 +233,10 @@ function MapaContent() {
                 onChange={(e) => setFiltroRubro(e.target.value)}
                 className="font-label rounded-full border border-outline-variant/20 bg-surface-container-low px-3 py-1.5 text-xs text-on-surface-variant"
               >
-                <option value="">Todos los rubros</option>
+                <option value="">{t.mapa.allCategories}</option>
                 {rubros.map((r) => (
                   <option key={r} value={r}>
-                    {traducirRubro(r)}
+                    {traducirRubro(r, lang)}
                   </option>
                 ))}
               </select>
@@ -243,7 +247,7 @@ function MapaContent() {
                   onChange={(e) => setSoloEnriquecidos(e.target.checked)}
                   className="accent-primary"
                 />
-                Solo enriquecidos
+                {t.mapa.onlyEnriched}
               </label>
               <span className="font-mono text-xs text-on-surface-variant/70">
                 {resultadosFiltrados.length} / {resultados.length}
@@ -267,7 +271,7 @@ function MapaContent() {
                   }
                   className="accent-primary"
                 />
-                Seleccionar todos ({seleccionados.size})
+                {t.mapa.selectAll(seleccionados.size)}
               </label>
               {seleccionados.size > 0 && (
                 <div className="flex gap-2">
@@ -276,14 +280,14 @@ function MapaContent() {
                     disabled={bulkEnriqueciendo}
                     className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80 disabled:opacity-50"
                   >
-                    {bulkEnriqueciendo ? 'Enriqueciendo…' : 'Enriquecer selección'}
+                    {bulkEnriqueciendo ? t.mapa.enriching : t.mapa.enrichSelection}
                   </button>
                   <button
                     onClick={handleAgregarBulk}
                     disabled={bulkAgregando}
                     className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
                   >
-                    {bulkAgregando ? 'Agregando…' : 'Agregar todos a pipeline'}
+                    {bulkAgregando ? t.mapa.adding : t.mapa.addAllToPipeline}
                   </button>
                 </div>
               )}
@@ -291,7 +295,7 @@ function MapaContent() {
           )}
 
           {resultados.length === 0 && !buscando && (
-            <p className="text-sm text-on-surface-variant/70">Todavía no hay resultados.</p>
+            <p className="text-sm text-on-surface-variant/70">{t.mapa.noResultsYet}</p>
           )}
 
           <ul className="space-y-3">
@@ -311,7 +315,9 @@ function MapaContent() {
                     <div>
                       <p className="font-title text-sm font-semibold text-on-surface">{negocio.nombre}</p>
                       {negocio.rubro && (
-                        <p className="font-label mt-1 text-xs text-on-surface-variant">{traducirRubro(negocio.rubro)}</p>
+                        <p className="font-label mt-1 text-xs text-on-surface-variant">
+                          {traducirRubro(negocio.rubro, lang)}
+                        </p>
                       )}
                       {negocio.direccion && (
                         <p className="font-label mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
@@ -344,7 +350,7 @@ function MapaContent() {
                         : 'border border-outline-variant/20 bg-surface-container-highest text-on-surface-variant'
                     }`}
                   >
-                    {negocio.enriquecido ? 'enriquecido' : 'básico (OSM)'}
+                    {negocio.enriquecido ? t.mapa.enriched : t.mapa.basic}
                   </span>
                 </div>
 
@@ -355,7 +361,7 @@ function MapaContent() {
                       disabled={enriqueciendoIds.has(negocio.id)}
                       className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80 disabled:opacity-50"
                     >
-                      {enriqueciendoIds.has(negocio.id) ? 'Enriqueciendo…' : 'Enriquecer con Google'}
+                      {enriqueciendoIds.has(negocio.id) ? t.mapa.enriching : t.mapa.enrichWithGoogle}
                     </button>
                   )}
                   <button
@@ -363,7 +369,7 @@ function MapaContent() {
                     disabled={agregadosIds.has(negocio.id)}
                     className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
                   >
-                    {agregadosIds.has(negocio.id) ? 'En pipeline ✓' : 'Agregar a pipeline'}
+                    {agregadosIds.has(negocio.id) ? t.mapa.inPipeline : t.mapa.addToPipeline}
                   </button>
                 </div>
               </li>

@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Skeleton from '@/components/Skeleton';
 import { traducirRubro } from '@/lib/rubros';
+import { useLanguage } from '@/lib/i18n/LanguageProvider';
+import type { Dictionary } from '@/lib/i18n/types';
 import { ETAPAS, type Etapa, type Lead } from '@/lib/types';
 
 function hoyISO() {
@@ -24,31 +26,20 @@ function estadoFecha(fecha: string | null): 'vencido' | 'hoy' | null {
   return null;
 }
 
-function exportarCSV(leads: Lead[]) {
-  const headers = [
-    'Nombre',
-    'Rubro',
-    'Dirección',
-    'Teléfono',
-    'Web',
-    'Etapa',
-    'Próxima acción',
-    'Fecha',
-    'Notas',
-  ];
+function exportarCSV(leads: Lead[], t: Dictionary, lang: 'es' | 'en') {
   const filas = leads.map((l) => [
     l.negocio?.nombre ?? '',
-    traducirRubro(l.negocio?.rubro),
+    traducirRubro(l.negocio?.rubro, lang),
     l.negocio?.direccion ?? '',
     l.negocio?.telefono ?? '',
     l.negocio?.web ?? '',
-    ETAPAS.find((e) => e.value === l.etapa)?.label ?? l.etapa,
+    t.etapas[l.etapa],
     l.proxima_accion ?? '',
     l.proxima_accion_fecha ?? '',
     l.notas ?? '',
   ]);
 
-  const csv = [headers, ...filas]
+  const csv = [t.pipeline.csvHeaders, ...filas]
     .map((fila) => fila.map((celda) => `"${String(celda).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
@@ -64,6 +55,7 @@ function exportarCSV(leads: Lead[]) {
 
 export default function PipelinePage() {
   const router = useRouter();
+  const { lang, t } = useLanguage();
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,10 +67,10 @@ export default function PipelinePage() {
     try {
       const res = await fetch('/api/leads');
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Error cargando leads');
+      if (!res.ok) throw new Error(data.error ?? t.pipeline.errorLoading);
       setLeads(data.leads ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error inesperado');
+      setError(err instanceof Error ? err.message : t.pipeline.unexpectedError);
     } finally {
       setLoading(false);
     }
@@ -87,6 +79,7 @@ export default function PipelinePage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial de datos al montar
     cargarLeads();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function cambiarEtapa(leadId: string, etapa: Etapa) {
@@ -117,9 +110,9 @@ export default function PipelinePage() {
       (l) =>
         l.negocio?.nombre?.toLowerCase().includes(q) ||
         l.negocio?.rubro?.toLowerCase().includes(q) ||
-        traducirRubro(l.negocio?.rubro).toLowerCase().includes(q)
+        traducirRubro(l.negocio?.rubro, lang).toLowerCase().includes(q)
     );
-  }, [leads, busqueda]);
+  }, [leads, busqueda, lang]);
 
   if (error) return <div className="p-6 text-sm text-error">{error}</div>;
 
@@ -135,7 +128,7 @@ export default function PipelinePage() {
         </div>
         <div className="flex gap-4 overflow-x-auto pb-4">
           {ETAPAS.map((etapa) => (
-            <div key={etapa.value} className="w-72 shrink-0 rounded-xl bg-surface-container-low/50 p-2">
+            <div key={etapa} className="w-72 shrink-0 rounded-xl bg-surface-container-low/50 p-2">
               <div className="mb-2 flex items-center justify-between px-2 py-1">
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="h-4 w-6 rounded-full" />
@@ -158,7 +151,7 @@ export default function PipelinePage() {
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <h1 className="font-headline text-2xl font-semibold text-on-surface">Pipeline</h1>
+        <h1 className="font-headline text-2xl font-semibold text-on-surface">{t.pipeline.title}</h1>
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative w-full sm:w-64">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">
@@ -166,46 +159,46 @@ export default function PipelinePage() {
             </span>
             <input
               type="text"
-              placeholder="Buscar por nombre o rubro…"
+              placeholder={t.pipeline.searchPlaceholder}
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               className="w-full rounded-full border-0 bg-surface-container-low py-2 pl-9 pr-3 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
             />
           </div>
           <button
-            onClick={() => exportarCSV(leadsFiltrados)}
+            onClick={() => exportarCSV(leadsFiltrados, t, lang)}
             disabled={leadsFiltrados.length === 0}
             className="font-label flex items-center gap-1.5 rounded-xl border-2 border-primary/30 px-4 py-2 text-sm font-medium text-primary hover:bg-primary-container/20 disabled:opacity-50"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>
-            Exportar CSV
+            {t.pipeline.exportCsv}
           </button>
         </div>
       </div>
 
       <div className="flex gap-4 overflow-x-auto pb-4">
         {ETAPAS.map((etapa) => {
-          const leadsDeEtapa = leadsFiltrados.filter((l) => l.etapa === etapa.value);
-          const isDragOver = dragOverEtapa === etapa.value;
+          const leadsDeEtapa = leadsFiltrados.filter((l) => l.etapa === etapa);
+          const isDragOver = dragOverEtapa === etapa;
 
           return (
             <div
-              key={etapa.value}
+              key={etapa}
               onDragOver={(e) => {
                 e.preventDefault();
-                setDragOverEtapa(etapa.value);
+                setDragOverEtapa(etapa);
               }}
-              onDragLeave={() => setDragOverEtapa((prev) => (prev === etapa.value ? null : prev))}
+              onDragLeave={() => setDragOverEtapa((prev) => (prev === etapa ? null : prev))}
               onDrop={(e) => {
                 e.preventDefault();
-                handleDrop(etapa.value);
+                handleDrop(etapa);
               }}
               className={`w-72 shrink-0 rounded-xl p-2 transition-colors ${
                 isDragOver ? 'bg-primary-container/20 ring-2 ring-primary-container' : 'bg-surface-container-low/50'
               }`}
             >
               <div className="mb-2 flex items-center justify-between px-2 py-1">
-                <h2 className="font-title text-sm font-semibold text-on-surface">{etapa.label}</h2>
+                <h2 className="font-title text-sm font-semibold text-on-surface">{t.etapas[etapa]}</h2>
                 <span className="font-mono rounded-full bg-surface-container-highest px-2 py-0.5 text-xs text-on-surface-variant">
                   {leadsDeEtapa.length}
                 </span>
@@ -227,7 +220,7 @@ export default function PipelinePage() {
                     >
                       {lead.negocio?.rubro && (
                         <span className="font-label mb-1.5 inline-block rounded-full border border-outline-variant/20 bg-surface-container-highest px-2 py-0.5 text-[10px] text-on-surface-variant">
-                          {traducirRubro(lead.negocio.rubro)}
+                          {traducirRubro(lead.negocio.rubro, lang)}
                         </span>
                       )}
                       <p className="font-title text-sm font-semibold text-on-surface">{lead.negocio?.nombre}</p>
@@ -249,7 +242,7 @@ export default function PipelinePage() {
                             <span className="material-symbols-outlined text-[12px]">
                               {estado === 'vencido' ? 'warning' : 'schedule'}
                             </span>
-                            {estado === 'vencido' ? 'Vencido' : estado === 'hoy' ? 'Hoy' : 'Próximo'}
+                            {estado === 'vencido' ? t.pipeline.overdue : estado === 'hoy' ? t.pipeline.today : t.pipeline.upcoming}
                           </p>
                         </>
                       )}
@@ -258,7 +251,7 @@ export default function PipelinePage() {
                 })}
                 {leadsDeEtapa.length === 0 && (
                   <div className="rounded-xl border border-dashed border-outline-variant/30 p-3 text-center text-xs text-on-surface-variant/60">
-                    Soltá una tarjeta acá
+                    {t.pipeline.dropHere}
                   </div>
                 )}
               </div>

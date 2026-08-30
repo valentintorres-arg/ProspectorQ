@@ -182,3 +182,16 @@ body {
   color: var(--color-on-background);
   font-family: var(--font-body);
 }
+
+/* Estrellitas del ThemeToggle (modo oscuro) */
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.75);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
