@@ -56,6 +56,7 @@ export interface Dictionary {
     viewSavedZones: string;
     drawPrompt: string;
     reSearching: (name: string) => string;
+    searchByName: string;
     allCategories: string;
     onlyEnriched: string;
     freshnessAny: string;

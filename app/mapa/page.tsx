@@ -25,6 +25,7 @@ function MapaContent() {
   const [initialPolygon, setInitialPolygon] = useState<GeoJSON.Polygon | null>(null);
   const [nombreZonaCargada, setNombreZonaCargada] = useState<string | null>(null);
 
+  const [busquedaNombre, setBusquedaNombre] = useState('');
   const [filtroRubro, setFiltroRubro] = useState('');
   const [soloEnriquecidos, setSoloEnriquecidos] = useState(false);
   // '' = todos, o un número de días (7/30) — "verificado hace <= N días"
@@ -193,6 +194,7 @@ function MapaContent() {
   const resultadosFiltrados = useMemo(
     () =>
       resultados.filter((n) => {
+        if (busquedaNombre && !n.nombre.toLowerCase().includes(busquedaNombre.trim().toLowerCase())) return false;
         if (filtroRubro && n.rubro !== filtroRubro) return false;
         if (soloEnriquecidos && !n.enriquecido) return false;
         if (filtroFrescura) {
@@ -203,7 +205,7 @@ function MapaContent() {
         }
         return true;
       }),
-    [resultados, filtroRubro, soloEnriquecidos, filtroFrescura]
+    [resultados, busquedaNombre, filtroRubro, soloEnriquecidos, filtroFrescura]
   );
 
   return (
@@ -233,6 +235,21 @@ function MapaContent() {
         <div className="flex-1 overflow-y-auto p-4">
           {error && (
             <div className="mb-4 rounded-lg bg-error-container p-3 text-sm text-on-error-container">{error}</div>
+          )}
+
+          {resultados.length > 0 && (
+            <div className="relative mb-2">
+              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-outline">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder={t.mapa.searchByName}
+                value={busquedaNombre}
+                onChange={(e) => setBusquedaNombre(e.target.value)}
+                className="w-full rounded-full border-0 bg-surface-container-low py-2 pl-9 pr-3 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
+              />
+            </div>
           )}
 
           {resultados.length > 0 && (

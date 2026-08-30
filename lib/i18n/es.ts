@@ -51,6 +51,7 @@ const es: Dictionary = {
     viewSavedZones: 'Ver zonas guardadas',
     drawPrompt: 'Dibujá un polígono en el mapa (botón de dibujo arriba del mapa) para buscar negocios en esa zona.',
     reSearching: (name) => `Volviendo a buscar sobre "${name}".`,
+    searchByName: 'Buscar por nombre…',
     allCategories: 'Todos los rubros',
     onlyEnriched: 'Solo enriquecidos',
     freshnessAny: 'Verificado: cualquier fecha',
