@@ -5,7 +5,12 @@ import { NextResponse, type NextRequest } from 'next/server';
 // `middleware.ts` fue renombrado a `proxy.ts` en Next.js 16 — misma API.
 // /api/keepalive queda afuera porque lo pega el cron de Vercel (sin cookie
 // de sesión posible) — se autentica solo con CRON_SECRET, adentro del route.
-const PUBLIC_PATHS = ['/login', '/api/keepalive'];
+// /forgot-password y /auth/callback son parte del flujo de "olvidé mi
+// contraseña": por definición, se usan sin sesión todavía. /reset-password
+// NO está acá a propósito — para llegar ahí con sesión válida hay que pasar
+// por el link del mail, que es lo que exige que sea el usuario dueño de esa
+// cuenta el que cambie la contraseña.
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/auth/callback', '/api/keepalive'];
 
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

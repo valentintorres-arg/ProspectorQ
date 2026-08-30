@@ -42,6 +42,32 @@ export interface Dictionary {
     submit: string;
     submitting: string;
     invalidCredentials: string;
+    forgotPassword: string;
+    heroTitle: string;
+    heroDescription: string;
+  };
+  forgotPassword: {
+    title: string;
+    description: string;
+    email: string;
+    emailPlaceholder: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    backToLogin: string;
+  };
+  resetPassword: {
+    title: string;
+    description: string;
+    newPassword: string;
+    confirmPassword: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    mismatch: string;
+    tooShort: string;
+    genericError: string;
+    goToLogin: string;
   };
   mapCanvas: {
     drawZone: string;

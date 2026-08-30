@@ -56,6 +56,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     const map = L.map(mapDivRef.current, {
       center: [-34.6037, -58.3816], // Buenos Aires. Ajustá si tu zona de trabajo es otra.
       zoom: 12,
+      maxZoom: 19,
       zoomControl: false, // se reemplaza por los botones +/- propios (estética del design system)
       attributionControl: false, // a pedido: oculta el cartel "Leaflet | Tiles © Esri..."
     });
@@ -64,17 +65,20 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     // (grises + agua celeste) — más legible que OSM para mirar markers.
     // Nota: se probó CartoDB Positron primero pero ahora exige API key
     // incluso en su tier "gratuito", por eso Esri en su lugar.
+    // Esri solo publica tiles nativos hasta z16 — maxNativeZoom hace que
+    // Leaflet siga permitiendo zoomear hasta maxZoom (19) escalando esos
+    // mismos tiles en vez de pedir un z17+ que no existe (tile en blanco).
     const attribution =
       'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-      { attribution, maxZoom: 16 }
+      { attribution, maxZoom: 19, maxNativeZoom: 16 }
     ).addTo(map);
     // Capa de referencia (nombres de calles/barrios): se agrega después,
     // así queda arriba del canvas gris dentro del mismo tilePane.
     L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-      { attribution, maxZoom: 16 }
+      { attribution, maxZoom: 19, maxNativeZoom: 16 }
     ).addTo(map);
 
     mapRef.current = map;

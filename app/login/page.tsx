@@ -1,10 +1,12 @@
 'use client';
 
 import { Suspense, useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import Logo from '@/components/Logo';
+import LoginMapIllustration from '@/components/LoginMapIllustration';
 
 function LoginForm() {
   const router = useRouter();
@@ -105,6 +107,12 @@ function LoginForm() {
         </div>
       </div>
 
+      <div className="mb-6 text-right">
+        <Link href="/forgot-password" className="font-label text-xs text-primary hover:underline">
+          {t.login.forgotPassword}
+        </Link>
+      </div>
+
       <button
         type="submit"
         disabled={loading}
@@ -116,12 +124,32 @@ function LoginForm() {
   );
 }
 
+function LoginHero() {
+  const { t } = useLanguage();
+  return (
+    <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl shadow-[0px_8px_30px_rgba(103,75,181,0.15)]">
+        <LoginMapIllustration />
+      </div>
+      <div>
+        <h2 className="font-headline text-2xl font-semibold text-on-surface">{t.login.heroTitle}</h2>
+        <p className="mt-2 text-sm text-on-surface-variant">{t.login.heroDescription}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function LoginPage() {
   return (
-    <div className="flex flex-1 items-center justify-center p-4">
-      <Suspense>
-        <LoginForm />
-      </Suspense>
+    <div className="flex flex-1 flex-col items-center justify-center gap-10 p-4 md:flex-row md:gap-16">
+      <div className="hidden md:flex md:flex-1 md:justify-end">
+        <LoginHero />
+      </div>
+      <div className="flex md:flex-1 md:justify-start">
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+      </div>
     </div>
   );
 }
