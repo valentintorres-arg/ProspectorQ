@@ -47,7 +47,7 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
   const [puntos, setPuntos] = useState(0);
 
   // Inicialización del mapa (una sola vez).
-  // Usa Leaflet + tiles de OpenStreetMap: 100% gratis, sin API key.
+  // Usa Leaflet + tiles de OpenStreetMap: 100% gratis, sin API key ni cuenta.
   // El dibujo del polígono se hace a mano: click agrega vértices sobre un
   // L.Polygon, y un botón cierra la zona y dispara la búsqueda.
   useEffect(() => {
@@ -58,28 +58,21 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
       zoom: 12,
       maxZoom: 19,
       zoomControl: false, // se reemplaza por los botones +/- propios (estética del design system)
-      attributionControl: false, // a pedido: oculta el cartel "Leaflet | Tiles © Esri..."
     });
 
-    // Esri "Light Gray Canvas": gratis, sin API key, estilo minimalista
-    // (grises + agua celeste) — más legible que OSM para mirar markers.
-    // Nota: se probó CartoDB Positron primero pero ahora exige API key
-    // incluso en su tier "gratuito", por eso Esri en su lugar.
-    // Esri solo publica tiles nativos hasta z16 — maxNativeZoom hace que
-    // Leaflet siga permitiendo zoomear hasta maxZoom (19) escalando esos
-    // mismos tiles en vez de pedir un z17+ que no existe (tile en blanco).
-    const attribution =
-      'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ';
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
-      { attribution, maxZoom: 19, maxNativeZoom: 16 }
-    ).addTo(map);
-    // Capa de referencia (nombres de calles/barrios): se agrega después,
-    // así queda arriba del canvas gris dentro del mismo tilePane.
-    L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}',
-      { attribution, maxZoom: 19, maxNativeZoom: 16 }
-    ).addTo(map);
+    // Se probaron, en orden: Esri Light Gray Canvas (gratis, sin key, pero
+    // tiles nativos solo hasta z16 -> se veía pixelado forzando más zoom) y
+    // OpenFreeMap/CartoDB Positron vectorial (nítido a cualquier zoom, pero
+    // requiere WebGL vía MapLibre GL -> pantalla en blanco en máquinas sin
+    // aceleración de GPU real, confirmado tanto en este entorno como en el
+    // browser real). Tiles rasters de OSM: el único que es gratis, sin
+    // cuenta Y no depende de WebGL. Atribución visible a propósito: la
+    // licencia ODbL de OSM la exige, a diferencia de Esri/Carto donde se
+    // ocultaba "a pedido".
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
 
     mapRef.current = map;
     setReady(true);

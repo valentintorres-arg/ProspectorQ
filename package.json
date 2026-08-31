@@ -30,6 +30,8 @@
     "typescript": "^5"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["duckdb"]
+    "onlyBuiltDependencies": [
+      "duckdb"
+    ]
   }
 }
