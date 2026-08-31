@@ -41,6 +41,30 @@ const es: Dictionary = {
     heroTitle: 'Dibujá una zona. Encontrá cada negocio adentro.',
     heroDescription:
       'Prospector busca automáticamente los negocios dentro de la zona que dibujás en el mapa, los enriquece con datos de Google y arma tu pipeline de ventas.',
+    noAccount: '¿No tenés cuenta?',
+    signUpLink: 'Registrate',
+  },
+  signup: {
+    title: 'Crear cuenta',
+    email: 'Email',
+    emailPlaceholder: 'nombre@empresa.com',
+    password: 'Contraseña',
+    confirmPassword: 'Confirmar contraseña',
+    submit: 'Crear cuenta',
+    submitting: 'Creando…',
+    mismatch: 'Las contraseñas no coinciden',
+    tooShort: 'La contraseña tiene que tener al menos 6 caracteres',
+    genericError: 'No se pudo crear la cuenta. Probá de nuevo.',
+    emailInUse: 'Ya existe una cuenta con ese email',
+    success: 'Cuenta creada. Ahora necesitás que el equipo la apruebe antes de poder ingresar.',
+    hasAccount: '¿Ya tenés cuenta?',
+    loginLink: 'Iniciar sesión',
+  },
+  pendingApproval: {
+    title: 'Cuenta pendiente de aprobación',
+    description:
+      'Tu cuenta fue creada correctamente, pero todavía nadie del equipo la aprobó. Una vez que lo hagan, vas a poder ingresar con tu email y contraseña.',
+    signOut: 'Cerrar sesión',
   },
   forgotPassword: {
     title: 'Recuperar contraseña',

@@ -45,6 +45,29 @@ export interface Dictionary {
     forgotPassword: string;
     heroTitle: string;
     heroDescription: string;
+    noAccount: string;
+    signUpLink: string;
+  };
+  signup: {
+    title: string;
+    email: string;
+    emailPlaceholder: string;
+    password: string;
+    confirmPassword: string;
+    submit: string;
+    submitting: string;
+    mismatch: string;
+    tooShort: string;
+    genericError: string;
+    emailInUse: string;
+    success: string;
+    hasAccount: string;
+    loginLink: string;
+  };
+  pendingApproval: {
+    title: string;
+    description: string;
+    signOut: string;
   };
   forgotPassword: {
     title: string;

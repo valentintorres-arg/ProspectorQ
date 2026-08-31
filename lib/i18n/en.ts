@@ -41,6 +41,30 @@ const en: Dictionary = {
     heroTitle: 'Draw a zone. Find every business inside it.',
     heroDescription:
       'Prospector automatically finds the businesses inside the zone you draw on the map, enriches them with Google data, and builds your sales pipeline.',
+    noAccount: "Don't have an account?",
+    signUpLink: 'Sign up',
+  },
+  signup: {
+    title: 'Create account',
+    email: 'Email',
+    emailPlaceholder: 'name@company.com',
+    password: 'Password',
+    confirmPassword: 'Confirm password',
+    submit: 'Create account',
+    submitting: 'Creating…',
+    mismatch: "Passwords don't match",
+    tooShort: 'Password must be at least 6 characters',
+    genericError: "Couldn't create the account. Try again.",
+    emailInUse: 'An account with that email already exists',
+    success: 'Account created. The team now needs to approve it before you can sign in.',
+    hasAccount: 'Already have an account?',
+    loginLink: 'Sign in',
+  },
+  pendingApproval: {
+    title: 'Account pending approval',
+    description:
+      "Your account was created successfully, but nobody on the team has approved it yet. Once they do, you'll be able to sign in with your email and password.",
+    signOut: 'Sign out',
   },
   forgotPassword: {
     title: 'Recover your password',
