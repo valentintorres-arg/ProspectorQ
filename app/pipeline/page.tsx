@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import Skeleton from '@/components/Skeleton';
 import { traducirRubro } from '@/lib/rubros';
@@ -56,46 +57,29 @@ function exportarCSV(leads: Lead[], t: Dictionary, lang: 'es' | 'en') {
 export default function PipelinePage() {
   const router = useRouter();
   const { lang, t } = useLanguage();
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading, mutate } = useSWR<{ leads: Lead[] }>('/api/leads');
+  const leads = data?.leads ?? [];
   const [dragLeadId, setDragLeadId] = useState<string | null>(null);
   const [dragOverEtapa, setDragOverEtapa] = useState<Etapa | null>(null);
   const [busqueda, setBusqueda] = useState('');
   const [filtroRubro, setFiltroRubro] = useState('');
 
-  async function cargarLeads() {
-    try {
-      const res = await fetch('/api/leads');
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t.pipeline.errorLoading);
-      setLeads(data.leads ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.pipeline.unexpectedError);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial de datos al montar
-    cargarLeads();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function cambiarEtapa(leadId: string, etapa: Etapa) {
-    // Actualización optimista: se ve al toque, y si falla se revierte con el refetch
-    setLeads((prev) => prev.map((l) => (l.id === leadId ? { ...l, etapa } : l)));
-    try {
-      const res = await fetch(`/api/leads/${leadId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ etapa }),
-      });
-      if (!res.ok) throw new Error('No se pudo actualizar');
-    } catch {
-      cargarLeads();
-    }
+    const optimista = leads.map((l) => (l.id === leadId ? { ...l, etapa } : l));
+    // Actualización optimista: se ve al toque; si el PATCH falla, SWR
+    // revierte solo (rollbackOnError) al valor que tenía antes.
+    mutate(
+      async () => {
+        const res = await fetch(`/api/leads/${leadId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ etapa }),
+        });
+        if (!res.ok) throw new Error('No se pudo actualizar');
+        return { leads: optimista };
+      },
+      { optimisticData: { leads: optimista }, rollbackOnError: true, revalidate: false }
+    );
   }
 
   function handleDrop(etapa: Etapa) {
@@ -122,9 +106,9 @@ export default function PipelinePage() {
     });
   }, [leads, busqueda, filtroRubro, lang]);
 
-  if (error) return <div className="p-6 text-sm text-error">{error}</div>;
+  if (error) return <div className="p-6 text-sm text-error">{error.message || t.pipeline.unexpectedError}</div>;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-full flex-col p-4 sm:p-6">
         <div className="mb-6 flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

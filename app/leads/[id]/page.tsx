@@ -1,6 +1,7 @@
 'use client';
 
-import { use, useEffect, useState, type FormEvent } from 'react';
+import { use, useState, type FormEvent } from 'react';
+import useSWR from 'swr';
 import Link from 'next/link';
 import Skeleton from '@/components/Skeleton';
 import { traducirRubro } from '@/lib/rubros';
@@ -27,35 +28,17 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
   const { id } = use(params);
   const { lang, t } = useLanguage();
 
-  const [lead, setLead] = useState<Lead | null>(null);
-  const [interacciones, setInteracciones] = useState<Interaccion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading, mutate } = useSWR<{ lead: Lead; interacciones: Interaccion[] }>(
+    `/api/leads/${id}`
+  );
+  const lead = data?.lead ?? null;
+  const interacciones = data?.interacciones ?? [];
   const [guardando, setGuardando] = useState(false);
+  const [accionError, setAccionError] = useState<string | null>(null);
 
   const [tipo, setTipo] = useState<TipoInteraccion>('nota');
   const [descripcion, setDescripcion] = useState('');
   const [enviando, setEnviando] = useState(false);
-
-  async function cargar() {
-    try {
-      const res = await fetch(`/api/leads/${id}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t.leadDetail.errorLoading);
-      setLead(data.lead);
-      setInteracciones(data.interacciones ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t.leadDetail.unexpectedError);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch inicial de datos al montar
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
 
   async function actualizarLead(update: {
     etapa?: Etapa;
@@ -63,31 +46,33 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
     proxima_accion_fecha?: string | null;
     notas?: string | null;
   }) {
-    if (!lead) return;
+    if (!lead || !data) return;
     setGuardando(true);
-    setLead({ ...lead, ...update });
-    try {
-      const res = await fetch(`/api/leads/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          etapa: update.etapa,
-          proximaAccion: update.proxima_accion,
-          proximaAccionFecha: update.proxima_accion_fecha,
-          notas: update.notas,
-        }),
-      });
-      if (!res.ok) throw new Error(t.leadDetail.errorSaving);
-    } catch {
-      cargar();
-    } finally {
-      setGuardando(false);
-    }
+    // Actualización optimista: se ve al toque; si el PATCH falla, SWR
+    // revierte solo (rollbackOnError) al valor que tenía antes.
+    await mutate(
+      async () => {
+        const res = await fetch(`/api/leads/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            etapa: update.etapa,
+            proximaAccion: update.proxima_accion,
+            proximaAccionFecha: update.proxima_accion_fecha,
+            notas: update.notas,
+          }),
+        });
+        if (!res.ok) throw new Error(t.leadDetail.errorSaving);
+        return { ...data, lead: { ...lead, ...update } };
+      },
+      { optimisticData: { ...data, lead: { ...lead, ...update } }, rollbackOnError: true, revalidate: false }
+    ).catch((err) => setAccionError(err instanceof Error ? err.message : t.leadDetail.unexpectedError));
+    setGuardando(false);
   }
 
   async function agregarInteraccion(e: FormEvent) {
     e.preventDefault();
-    if (!descripcion.trim()) return;
+    if (!descripcion.trim() || !data) return;
     setEnviando(true);
     try {
       const res = await fetch(`/api/leads/${id}/interacciones`, {
@@ -95,20 +80,20 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tipo, descripcion }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? t.leadDetail.errorAddingInteraction);
-      setInteracciones((prev) => [data.interaccion, ...prev]);
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error ?? t.leadDetail.errorAddingInteraction);
+      await mutate({ ...data, interacciones: [resData.interaccion, ...interacciones] }, { revalidate: false });
       setDescripcion('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t.leadDetail.unexpectedError);
+      setAccionError(err instanceof Error ? err.message : t.leadDetail.unexpectedError);
     } finally {
       setEnviando(false);
     }
   }
 
-  if (error && !lead) return <div className="p-6 text-sm text-error">{error}</div>;
+  if (error && !lead) return <div className="p-6 text-sm text-error">{error.message || t.leadDetail.unexpectedError}</div>;
 
-  if (loading || !lead) {
+  if (isLoading || !lead) {
     return (
       <div className="w-full p-4 sm:p-6">
         <Skeleton className="mb-4 h-5 w-36" />
@@ -178,8 +163,8 @@ export default function LeadDetailPage({ params }: { params: Promise<{ id: strin
         {t.leadDetail.backToPipeline}
       </Link>
 
-      {error && (
-        <p className="mb-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">{error}</p>
+      {accionError && (
+        <p className="mb-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">{accionError}</p>
       )}
 
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">

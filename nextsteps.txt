@@ -17,7 +17,21 @@ PENDIENTE INMEDIATO
    registro, solo /login). Nuevos usuarios se crean a mano desde el
    Dashboard de Supabase (Authentication > Users > Add user).
 
-3. Detalle menor detectado al probar el dedup: cuando una re-busqueda
+3. Cachear los fetches del cliente (mapa/zonas/pipeline/dashboard/detalle
+   de lead): hoy cada página hace su propio useEffect+fetch en cada
+   navegación, aunque nada haya cambiado en la DB. Evaluar migrar a SWR
+   (no React Query - la migración desde useEffect+fetch es casi 1:1, y
+   React Query pide un provider/setup más pesado que no hace falta acá):
+   sirve el dato cacheado al instante al volver a una sección, revalida
+   en segundo plano, y en las mutaciones propias (agregar lead, cambiar
+   etapa, enriquecer) se llama a mutate() para que el cambio se vea al
+   toque en vez de esperar la revalidación. Ver guías ya incluidas en
+   node_modules/next/dist/docs/01-app/02-guides/client-side-data-fetching/
+   (swr.md y tanstack-query.md) - es el patrón que Next.js recomienda para
+   este caso. Ojo: un cache "a mano" con TTL fijo sin invalidación NO es
+   buena idea acá (mostraría counts/leads desactualizados).
+
+4. Detalle menor detectado al probar el dedup: cuando una re-busqueda
    sobre una zona ya existente da como resultado que TODOS los negocios
    encontrados ya estaban guardados (deduplicados contra negocios de una
    busqueda anterior), la zona nueva que se crea queda con "0 negocios

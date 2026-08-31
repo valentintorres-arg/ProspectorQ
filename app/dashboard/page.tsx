@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import Skeleton from '@/components/Skeleton';
 import { traducirRubro } from '@/lib/rubros';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
@@ -32,25 +32,9 @@ function BarRow({ label, count, max }: { label: string; count: number; max: numb
 
 export default function DashboardPage() {
   const { lang, t } = useLanguage();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error } = useSWR<DashboardData>('/api/dashboard');
 
-  useEffect(() => {
-    async function cargar() {
-      try {
-        const res = await fetch('/api/dashboard');
-        const json = await res.json();
-        if (!res.ok) throw new Error(json.error ?? t.dashboard.errorLoading);
-        setData(json);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t.dashboard.unexpectedError);
-      }
-    }
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  if (error) return <div className="p-6 text-sm text-error">{error}</div>;
+  if (error) return <div className="p-6 text-sm text-error">{error.message || t.dashboard.unexpectedError}</div>;
 
   if (!data) {
     return (

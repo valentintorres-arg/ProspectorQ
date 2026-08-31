@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import useSWR from 'swr';
 import { useRouter } from 'next/navigation';
 import Skeleton from '@/components/Skeleton';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
@@ -9,30 +9,12 @@ import type { Zona } from '@/lib/types';
 export default function ZonasPage() {
   const router = useRouter();
   const { lang, t } = useLanguage();
-  const [zonas, setZonas] = useState<Zona[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, error, isLoading } = useSWR<{ zonas: Zona[] }>('/api/zonas');
+  const zonas = data?.zonas ?? [];
 
-  useEffect(() => {
-    async function cargar() {
-      try {
-        const res = await fetch('/api/zonas');
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? t.zonas.errorLoading);
-        setZonas(data.zonas ?? []);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t.zonas.unexpectedError);
-      } finally {
-        setLoading(false);
-      }
-    }
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  if (error) return <div className="p-6 text-sm text-error">{error.message || t.zonas.unexpectedError}</div>;
 
-  if (error) return <div className="p-6 text-sm text-error">{error}</div>;
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="p-4 sm:p-6">
         <div className="mb-1 flex flex-wrap items-center justify-between gap-3">

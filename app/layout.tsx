@@ -3,6 +3,7 @@ import { Geist, Hanken_Grotesk, Inter } from "next/font/google";
 import "./globals.css";
 import { getUser } from "@/lib/supabase/auth-server";
 import { LanguageProvider } from "@/lib/i18n/LanguageProvider";
+import SWRProvider from "@/components/SWRProvider";
 import AppShell from "@/components/AppShell";
 
 const geist = Geist({ subsets: ["latin"], weight: "variable", variable: "--font-geist" });
@@ -54,13 +55,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full bg-surface font-body text-on-surface" suppressHydrationWarning>
         <script dangerouslySetInnerHTML={{ __html: INIT_SCRIPT }} />
         <LanguageProvider>
-          {!user ? (
-            <main className="flex min-h-screen flex-col bg-gradient-to-br from-surface via-surface to-primary-container/20">
-              {children}
-            </main>
-          ) : (
-            <AppShell email={user.email ?? ''}>{children}</AppShell>
-          )}
+          <SWRProvider>
+            {!user ? (
+              <main className="flex min-h-screen flex-col bg-gradient-to-br from-surface via-surface to-primary-container/20">
+                {children}
+              </main>
+            ) : (
+              <AppShell email={user.email ?? ''}>{children}</AppShell>
+            )}
+          </SWRProvider>
         </LanguageProvider>
       </body>
     </html>
