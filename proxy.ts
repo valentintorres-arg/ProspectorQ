@@ -10,7 +10,17 @@ import { NextResponse, type NextRequest } from 'next/server';
 // NO está acá a propósito — para llegar ahí con sesión válida hay que pasar
 // por el link del mail, que es lo que exige que sea el usuario dueño de esa
 // cuenta el que cambie la contraseña.
-const PUBLIC_PATHS = ['/login', '/forgot-password', '/auth/callback', '/api/keepalive'];
+// /signup es el registro público, y /pending-approval es adonde cae una
+// cuenta recién creada (sin aprobar todavía) — ver el chequeo de "approved"
+// más abajo.
+const PUBLIC_PATHS = [
+  '/login',
+  '/signup',
+  '/forgot-password',
+  '/auth/callback',
+  '/pending-approval',
+  '/api/keepalive',
+];
 
 export default async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -53,11 +63,32 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === '/login') {
+  if (user && (pathname === '/login' || pathname === '/signup')) {
     const url = request.nextUrl.clone();
     url.pathname = '/mapa';
     url.search = '';
     return NextResponse.redirect(url);
+  }
+
+  // Cuenta autenticada pero todavía no aprobada por el equipo (ver
+  // supabase/migrations/0005_profiles_approval.sql): no entra a ninguna
+  // página ni API real, solo puede ver /pending-approval.
+  if (user && !isPublic) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('approved')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.approved) {
+      if (pathname.startsWith('/api')) {
+        return NextResponse.json({ error: 'Cuenta pendiente de aprobación' }, { status: 403 });
+      }
+      const url = request.nextUrl.clone();
+      url.pathname = '/pending-approval';
+      url.search = '';
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;
