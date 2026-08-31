@@ -3,13 +3,30 @@ PROSPECTOR - PROXIMOS PASOS
 
 PENDIENTE INMEDIATO
 --------------------
-0. Logo del sidebar (components/Sidebar.tsx): hoy clickearlo solo
+0. ANTES DE COBRARLE A ALGUIEN (se planteó cobrar ~$10.000 ARS/mes):
+   la infra actual está armada sobre tiers gratuitos que NO están
+   pensados para uso comercial pago, y hay riesgo real de que corten el
+   servicio si escala:
+   - Vercel: el proyecto está en plan Hobby, cuyos términos de servicio
+     son explícitos en que es para uso personal/no-comercial. Facturar
+     a clientes reales sobre Hobby no cumple esos términos - hay que
+     pasar a Pro (u otro plan comercial) antes de cobrar en serio.
+   - OpenStreetMap (tiles del mapa, components/MapCanvas.tsx): su
+     politica de uso de tiles pide que apps de produccion/uso pesado no
+     le peguen directo a sus tile servers gratuitos sin arreglo aparte -
+     pensada para uso personal/evaluación, no para un producto pago.
+   Ninguna de las dos es un rediseño, son upgrades/cambios de proveedor
+   a resolver antes de facturar, no después. (Esto no es asesoría legal,
+   son los términos de servicio tal como están publicados - conviene
+   revisarlos directamente antes de decidir.)
+
+1. Logo del sidebar (components/Sidebar.tsx): hoy clickearlo solo
    colapsa/expande el menú (onToggleCollapse). Pedido: que además lleve
    a "/" (home de la app) - el botón puede seguir colapsando/expandiendo
    pero necesita un link real al home (o separar "logo" de "toggle" en
    dos elementos clickeables distintos).
 
-1. Enriquecer "/" (app/page.tsx) - el instructivo quedó muy básico:
+2. Enriquecer "/" (app/page.tsx) - el instructivo quedó muy básico:
    - Agregar stats rápidas: un resumen general tipo las stat tiles de
      /dashboard (zonas buscadas, negocios encontrados, leads en
      pipeline), pero más simple/liviano - nada extravagante, la idea es
@@ -19,7 +36,7 @@ PENDIENTE INMEDIATO
      título y una linea de descripción cada una - se pidió explícitamente
      "enriquecer", el instructivo actual quedó corto/vacío).
 
-2. Botones decorativos del TopBar (campana/notificaciones, chat, Upgrade,
+3. Botones decorativos del TopBar (campana/notificaciones, chat, Upgrade,
    avatar "V"): hoy no hacen nada — fue una decisión explícita en su
    momento (ver YA RESUELTO 2026-08-30, "a pedido, para que calce
    visualmente con los mockups de Stitch"). Ahora se pidió hacerlos
@@ -29,15 +46,17 @@ PENDIENTE INMEDIATO
      lead vencido, zona terminó de buscar, etc.)?
    - Chat: ¿soporte, IA, o feedback?
    - Upgrade: ¿hay un plan pago real o queda decorativo hasta que lo haya?
+     (Ver punto 0 - si esto termina siendo un plan pago real, el
+     upgrade de Vercel/tiles del punto 0 pasa a ser un prerequisito.)
    - Avatar "V": candidato más obvio a resolver primero - menú de cuenta
      (mail, cerrar sesión, ¿configuración?) - ya existe esa lógica en
      Sidebar.tsx (handleLogout) para reusar.
 
-3. (Opcional) Google Places API para "Enriquecer con Google":
+4. (Opcional) Google Places API para "Enriquecer con Google":
    - Solo si querés completar telefono/web/rating de los negocios
    - Completar GOOGLE_MAPS_SERVER_API_KEY en .env.local (ver README)
 
-4. Detalle menor detectado al probar el dedup: cuando una re-busqueda
+5. Detalle menor detectado al probar el dedup: cuando una re-busqueda
    sobre una zona ya existente da como resultado que TODOS los negocios
    encontrados ya estaban guardados (deduplicados contra negocios de una
    busqueda anterior), la zona nueva que se crea queda con "0 negocios
