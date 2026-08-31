@@ -1,6 +1,35 @@
 import type { Dictionary } from './types';
 
 const es: Dictionary = {
+  home: {
+    title: 'Bienvenido a Prospector',
+    subtitle: 'Cuatro pasos para pasar de un mapa vacío a un pipeline de ventas con leads calificados.',
+    steps: [
+      {
+        icon: 'draw',
+        title: '1. Dibujá una zona en el Mapa',
+        description:
+          'Marcá el área que querés prospectar y Prospector busca automáticamente los negocios que hay adentro.',
+      },
+      {
+        icon: 'layers',
+        title: '2. Guardá y reutilizá tus Zonas',
+        description: 'Cada zona que dibujás queda guardada — volvé a escanearla cuando quieras ver qué cambió.',
+      },
+      {
+        icon: 'view_kanban',
+        title: '3. Armá tu Pipeline',
+        description:
+          'Agregá los negocios que te interesan al pipeline y movelos entre etapas a medida que avanza la venta.',
+      },
+      {
+        icon: 'bar_chart',
+        title: '4. Mirá el Dashboard',
+        description: 'Seguí cuántas zonas buscaste, cuántos leads generaste y tu tasa de cierre en tiempo real.',
+      },
+    ],
+    cta: 'Ir al mapa',
+  },
   common: {
     cancel: 'Cancelar',
   },

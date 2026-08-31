@@ -6,6 +6,16 @@ export type Lang = 'es' | 'en';
 // permite que cada idioma resuelva plural/orden de palabras como corresponda
 // ("1 punto" vs "2 puntos", "1 point" vs "2 points").
 export interface Dictionary {
+  home: {
+    title: string;
+    subtitle: string;
+    steps: {
+      icon: string;
+      title: string;
+      description: string;
+    }[];
+    cta: string;
+  };
   common: {
     cancel: string;
   };

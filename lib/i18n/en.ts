@@ -1,6 +1,33 @@
 import type { Dictionary } from './types';
 
 const en: Dictionary = {
+  home: {
+    title: 'Welcome to Prospector',
+    subtitle: 'Four steps to go from an empty map to a sales pipeline full of qualified leads.',
+    steps: [
+      {
+        icon: 'draw',
+        title: '1. Draw a zone on the Map',
+        description: 'Mark the area you want to prospect and Prospector automatically finds the businesses inside it.',
+      },
+      {
+        icon: 'layers',
+        title: '2. Save and reuse your Zones',
+        description: 'Every zone you draw is saved — re-scan it anytime to see what changed.',
+      },
+      {
+        icon: 'view_kanban',
+        title: '3. Build your Pipeline',
+        description: 'Add the businesses you care about to the pipeline and move them through stages as the sale progresses.',
+      },
+      {
+        icon: 'bar_chart',
+        title: '4. Check the Dashboard',
+        description: 'Track how many zones you searched, how many leads you generated, and your close rate in real time.',
+      },
+    ],
+    cta: 'Go to the map',
+  },
   common: {
     cancel: 'Cancel',
   },
