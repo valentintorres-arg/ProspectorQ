@@ -5,8 +5,9 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { traducirRubro } from '@/lib/rubros';
-import { formatearFrescura, diasDesdeVerificacion } from '@/lib/freshness';
+import { diasDesdeVerificacion } from '@/lib/freshness';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
+import NegocioCard from '@/components/NegocioCard';
 import type { Negocio } from '@/lib/types';
 
 // Leaflet toca el DOM directamente, así que no puede renderizarse en el servidor.
@@ -33,6 +34,10 @@ function MapaContent() {
   const [soloSinWeb, setSoloSinWeb] = useState(false);
   // '' = todos, o un número de días (7/30) — "verificado hace <= N días"
   const [filtroFrescura, setFiltroFrescura] = useState('');
+
+  // Colapsa el mapa para que la lista de resultados ocupe toda la pantalla
+  // (mejor lectura de las cards en zonas con muchos negocios).
+  const [mapaColapsado, setMapaColapsado] = useState(false);
 
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
   const [bulkEnriqueciendo, setBulkEnriqueciendo] = useState(false);
@@ -189,6 +194,22 @@ function MapaContent() {
     }
   }
 
+  // Props compartidas entre la card de la lista y la del popup del mapa —
+  // son el mismo negocio con las mismas acciones, no dos versiones.
+  function negocioCardProps(negocio: Negocio) {
+    return {
+      negocio,
+      lang,
+      t,
+      seleccionado: seleccionados.has(negocio.id),
+      onToggleSeleccionado: () => toggleSeleccionado(negocio.id),
+      enriqueciendo: enriqueciendoIds.has(negocio.id),
+      onEnriquecer: () => handleEnriquecer(negocio.id),
+      agregado: agregadosIds.has(negocio.id),
+      onAgregarAPipeline: () => handleAgregarAPipeline(negocio.id),
+    };
+  }
+
   const rubros = useMemo(
     () => Array.from(new Set(resultados.map((n) => n.rubro).filter((r): r is string => !!r))).sort(),
     [resultados]
@@ -216,22 +237,43 @@ function MapaContent() {
 
   return (
     <div className="flex h-full flex-col gap-4 p-4 md:flex-row">
-      <div className="h-[45vh] shrink-0 md:h-auto md:flex-1">
+      <div
+        className={`shrink-0 overflow-hidden transition-all duration-200 ${
+          mapaColapsado ? 'h-0 md:h-auto md:w-0 md:flex-none' : 'h-[45vh] md:h-auto md:flex-1'
+        }`}
+      >
         <MapCanvas
           onZoneDrawn={handleZoneDrawn}
           resultados={resultadosFiltrados}
           buscando={buscando}
           initialPolygon={initialPolygon}
+          renderPopup={(negocio) => <NegocioCard {...negocioCardProps(negocio)} />}
         />
       </div>
 
-      <aside className="flex min-h-[300px] flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant/20 bg-surface md:w-96 md:flex-none">
+      <aside
+        className={`flex min-h-[300px] flex-1 flex-col overflow-hidden rounded-xl border border-outline-variant/20 bg-surface transition-all duration-200 ${
+          mapaColapsado ? 'md:flex-1' : 'md:w-96 md:flex-none'
+        }`}
+      >
         <div className="border-b border-outline-variant/10 bg-surface-container-low/50 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-title text-base font-semibold text-on-surface">{t.mapa.results}</h2>
-            <Link href="/zonas" className="font-label text-xs text-primary hover:underline">
-              {t.mapa.viewSavedZones}
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setMapaColapsado((v) => !v)}
+                title={mapaColapsado ? t.mapa.expandMap : t.mapa.collapseMap}
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-on-surface-variant hover:bg-surface-container-highest hover:text-primary"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  {mapaColapsado ? 'chevron_left' : 'chevron_right'}
+                </span>
+              </button>
+              <Link href="/zonas" className="font-label text-xs text-primary hover:underline">
+                {t.mapa.viewSavedZones}
+              </Link>
+            </div>
           </div>
           <p className="mt-1 text-sm text-on-surface-variant">
             {nombreZonaCargada ? t.mapa.reSearching(nombreZonaCargada) : t.mapa.drawPrompt}
@@ -369,94 +411,8 @@ function MapaContent() {
 
           <ul className="space-y-3">
             {resultadosFiltrados.map((negocio) => (
-              <li
-                key={negocio.id}
-                className="rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-4 transition-all hover:border-primary/30 hover:shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="checkbox"
-                      checked={seleccionados.has(negocio.id)}
-                      onChange={() => toggleSeleccionado(negocio.id)}
-                      className="mt-1 accent-primary"
-                    />
-                    <div>
-                      <p className="font-title text-sm font-semibold text-on-surface">{negocio.nombre}</p>
-                      {negocio.rubro && (
-                        <p className="font-label mt-1 text-xs text-on-surface-variant">
-                          {traducirRubro(negocio.rubro, lang)}
-                        </p>
-                      )}
-                      {negocio.direccion && (
-                        <p className="font-label mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[13px]">location_on</span>
-                          {negocio.direccion}
-                        </p>
-                      )}
-                      {negocio.telefono && (
-                        <p className="font-label mt-0.5 flex items-center gap-1 text-xs text-on-surface-variant">
-                          <span className="material-symbols-outlined text-[13px]">call</span>
-                          {negocio.telefono}
-                        </p>
-                      )}
-                      {negocio.web && (
-                        <a
-                          href={negocio.web}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="font-label mt-0.5 block text-xs text-primary underline"
-                        >
-                          {negocio.web}
-                        </a>
-                      )}
-                      {(() => {
-                        const frescura = formatearFrescura(negocio.ultima_actualizacion, lang);
-                        if (!frescura) return null;
-                        return (
-                          <p
-                            className={`font-label mt-0.5 flex items-center gap-1 text-xs ${
-                              frescura.stale ? 'text-error' : 'text-on-surface-variant'
-                            }`}
-                          >
-                            <span className="material-symbols-outlined text-[13px]">
-                              {frescura.stale ? 'warning' : 'verified'}
-                            </span>
-                            {frescura.texto}
-                          </p>
-                        );
-                      })()}
-                    </div>
-                  </div>
-                  <span
-                    className={`font-mono shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                      negocio.enriquecido
-                        ? 'bg-primary-fixed text-on-primary-fixed-variant'
-                        : 'border border-outline-variant/20 bg-surface-container-highest text-on-surface-variant'
-                    }`}
-                  >
-                    {negocio.enriquecido ? t.mapa.enriched : t.mapa.basic}
-                  </span>
-                </div>
-
-                <div className="mt-3 flex gap-2 border-t border-outline-variant/10 pt-3">
-                  {!negocio.enriquecido && (
-                    <button
-                      onClick={() => handleEnriquecer(negocio.id)}
-                      disabled={enriqueciendoIds.has(negocio.id)}
-                      className="font-label rounded-full bg-surface-container-highest px-3 py-1 text-xs font-medium text-on-surface-variant hover:opacity-80 disabled:opacity-50"
-                    >
-                      {enriqueciendoIds.has(negocio.id) ? t.mapa.enriching : t.mapa.enrichWithGoogle}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleAgregarAPipeline(negocio.id)}
-                    disabled={agregadosIds.has(negocio.id)}
-                    className="font-label rounded-full bg-primary px-3 py-1 text-xs font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
-                  >
-                    {agregadosIds.has(negocio.id) ? t.mapa.inPipeline : t.mapa.addToPipeline}
-                  </button>
-                </div>
+              <li key={negocio.id}>
+                <NegocioCard {...negocioCardProps(negocio)} />
               </li>
             ))}
           </ul>

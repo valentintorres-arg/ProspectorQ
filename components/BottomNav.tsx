@@ -16,7 +16,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="flex h-16 shrink-0 items-center justify-around border-t border-outline-variant/10 bg-surface-container-low md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 shrink-0 items-center justify-around border-t border-outline-variant/10 bg-surface-container-low md:hidden">
       {NAV_ITEMS.map((item) => {
         const active = pathname === item.href || pathname.startsWith(item.href + '/');
         return (

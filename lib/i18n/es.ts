@@ -129,6 +129,8 @@ const es: Dictionary = {
   mapa: {
     results: 'Resultados',
     viewSavedZones: 'Ver zonas guardadas',
+    collapseMap: 'Colapsar mapa',
+    expandMap: 'Mostrar mapa',
     drawPrompt: 'Dibujá un polígono en el mapa (botón de dibujo arriba del mapa) para buscar negocios en esa zona.',
     reSearching: (name) => `Volviendo a buscar sobre "${name}".`,
     searchByName: 'Buscar por nombre…',

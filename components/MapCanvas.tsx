@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
@@ -14,6 +15,10 @@ interface MapCanvasProps {
   // volver a buscar desde /zonas). No dispara onZoneDrawn: eso lo maneja
   // la página que la pasó.
   initialPolygon?: GeoJSON.Polygon | null;
+  // Contenido del popup que se abre al clickear un marker — lo arma la
+  // página (mismo NegocioCard que la lista de resultados) porque necesita
+  // estado que vive ahí (seleccionados, enriqueciendoIds, etc.).
+  renderPopup: (negocio: Negocio) => React.ReactNode;
 }
 
 // Convierte un L.Polygon dibujado a un GeoJSON Polygon en [lng, lat]
@@ -34,7 +39,7 @@ function geoJSONToLatLngs(polygon: GeoJSON.Polygon): L.LatLng[] {
   return polygon.coordinates[0].map(([lng, lat]) => L.latLng(lat, lng));
 }
 
-export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPolygon }: MapCanvasProps) {
+export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPolygon, renderPopup }: MapCanvasProps) {
   const { t } = useLanguage();
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -42,6 +47,11 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
   const finalPolygonRef = useRef<L.Polygon | null>(null);
   const markersRef = useRef<L.CircleMarker[]>([]);
   const initialDrawnRef = useRef(false);
+  // Un <div> por negocio con marker, reusado como contenido del popup de
+  // Leaflet — el contenido real se porta desde React (ver el return más
+  // abajo) para poder usar los mismos handlers/estado que la lista.
+  const popupContainersRef = useRef<Map<string, HTMLDivElement>>(new Map());
+  const [openPopupIds, setOpenPopupIds] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
   const [dibujando, setDibujando] = useState(false);
   const [puntos, setPuntos] = useState(0);
@@ -77,7 +87,15 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
     mapRef.current = map;
     setReady(true);
 
+    // El contenedor puede cambiar de tamaño por CSS (ej. el toggle de
+    // colapsar/expandir el mapa en /mapa) sin que Leaflet se entere solo —
+    // sin esto, después de expandirlo de nuevo las tiles quedan mal
+    // recortadas hasta el próximo pan/zoom.
+    const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+    resizeObserver.observe(mapDivRef.current);
+
     return () => {
+      resizeObserver.disconnect();
       map.remove();
       mapRef.current = null;
     };
@@ -177,6 +195,10 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
 
     markersRef.current.forEach((m) => m.remove());
     markersRef.current = [];
+    // Los markers viejos ya no existen, así que ningún popup puede seguir
+    // abierto sobre ellos (si no, quedaría un portal apuntando a un
+    // container que Leaflet nunca vuelve a mostrar).
+    setOpenPopupIds([]);
 
     resultados.forEach((negocio) => {
       const marker = L.circleMarker([negocio.lat, negocio.lng], {
@@ -188,6 +210,20 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
       })
         .bindTooltip(negocio.nombre)
         .addTo(map);
+
+      marker.on('click', () => {
+        let container = popupContainersRef.current.get(negocio.id);
+        if (!container) {
+          container = document.createElement('div');
+          popupContainersRef.current.set(negocio.id, container);
+        }
+        marker.bindPopup(container, { minWidth: 260, maxWidth: 300, className: 'negocio-popup' }).openPopup();
+        setOpenPopupIds((prev) => (prev.includes(negocio.id) ? prev : [...prev, negocio.id]));
+      });
+      marker.on('popupclose', () => {
+        setOpenPopupIds((prev) => prev.filter((id) => id !== negocio.id));
+      });
+
       markersRef.current.push(marker);
     });
   }, [resultados]);
@@ -255,6 +291,13 @@ export default function MapCanvas({ onZoneDrawn, resultados, buscando, initialPo
           {t.mapCanvas.searching}
         </div>
       )}
+
+      {openPopupIds.map((id) => {
+        const container = popupContainersRef.current.get(id);
+        const negocio = resultados.find((n) => n.id === id);
+        if (!container || !negocio) return null;
+        return createPortal(renderPopup(negocio), container);
+      })}
     </div>
   );
 }

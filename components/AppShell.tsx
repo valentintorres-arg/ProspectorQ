@@ -40,7 +40,11 @@ export default function AppShell({ email, children }: { email: string; children:
         }`}
       >
         <TopBar email={email} />
-        <main className="flex-1 overflow-y-auto md:overflow-hidden">{children}</main>
+        {/* pb-16 en mobile: el BottomNav ahora es fixed (para que no se
+            scrollee con la página en Safari/Chrome mobile, donde h-screen
+            no siempre cubre el viewport real) — sin este padding, el nav
+            fijo taparía el final del contenido. */}
+        <main className="flex-1 overflow-y-auto pb-16 md:overflow-hidden md:pb-0">{children}</main>
         <BottomNav />
       </div>
     </div>

@@ -113,6 +113,8 @@ export interface Dictionary {
   mapa: {
     results: string;
     viewSavedZones: string;
+    collapseMap: string;
+    expandMap: string;
     drawPrompt: string;
     reSearching: (name: string) => string;
     searchByName: string;
