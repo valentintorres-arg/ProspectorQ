@@ -39,7 +39,7 @@ function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-sm rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-8 shadow-[0px_4px_20px_rgba(103,75,181,0.08)]"
+      className="w-full max-w-md rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-10 shadow-[0px_4px_20px_rgba(103,75,181,0.08)]"
     >
       <div className="mb-6 flex flex-col items-center text-center">
         <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-md bg-primary-container">
@@ -120,6 +120,13 @@ function LoginForm() {
       >
         {loading ? t.login.submitting : t.login.submit}
       </button>
+
+      <p className="font-label mt-4 text-center text-xs text-on-surface-variant">
+        {t.login.noAccount}{' '}
+        <Link href="/signup" className="text-primary hover:underline">
+          {t.login.signUpLink}
+        </Link>
+      </p>
     </form>
   );
 }
@@ -127,13 +134,13 @@ function LoginForm() {
 function LoginHero() {
   const { t } = useLanguage();
   return (
-    <div className="flex w-full max-w-md flex-col items-center gap-6 text-center">
-      <div className="w-full max-w-sm overflow-hidden rounded-2xl shadow-[0px_8px_30px_rgba(103,75,181,0.15)]">
+    <div className="flex w-full max-w-xl flex-col items-center gap-8 text-center">
+      <div className="w-full max-w-lg overflow-hidden rounded-2xl shadow-[0px_8px_30px_rgba(103,75,181,0.15)]">
         <LoginMapIllustration />
       </div>
       <div>
-        <h2 className="font-headline text-2xl font-semibold text-on-surface">{t.login.heroTitle}</h2>
-        <p className="mt-2 text-sm text-on-surface-variant">{t.login.heroDescription}</p>
+        <h2 className="font-headline text-3xl font-semibold text-on-surface">{t.login.heroTitle}</h2>
+        <p className="mt-3 text-base text-on-surface-variant">{t.login.heroDescription}</p>
       </div>
     </div>
   );
@@ -141,7 +148,7 @@ function LoginHero() {
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-10 p-4 md:flex-row md:gap-16">
+    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center gap-10 p-4 md:flex-row md:gap-16 md:p-12">
       <div className="hidden md:flex md:flex-1 md:justify-end">
         <LoginHero />
       </div>
