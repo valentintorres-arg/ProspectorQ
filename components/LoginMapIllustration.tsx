@@ -2,33 +2,44 @@
 // (dibujar una zona, encontrar negocios adentro) usando los mismos colores
 // que el mapa real (ver components/MapCanvas.tsx: zona en primary #674bb5,
 // markers enriquecidos en secondary #006c4b, básicos en tertiary #855316).
+// Los bloques son a mano y de tamaño irregular a propósito: una grilla
+// pareja se lee como papel cuadriculado/waffle, no como una ciudad.
+const BLOCKS: [number, number, number, number][] = [
+  [20, 20, 140, 65],
+  [180, 15, 115, 50],
+  [315, 20, 145, 90],
+  [15, 105, 85, 115],
+  [415, 90, 50, 165],
+  [365, 140, 75, 60],
+  [20, 245, 105, 75],
+  [365, 225, 95, 95],
+  [150, 375, 135, 85],
+  [300, 345, 150, 115],
+  [20, 335, 95, 125],
+];
+
 export default function LoginMapIllustration() {
   return (
-    <svg
-      viewBox="0 0 480 480"
-      className="h-full w-full"
-      role="img"
-      aria-hidden="true"
-    >
+    <svg viewBox="0 0 480 480" className="h-full w-full" role="img" aria-hidden="true">
       <rect width="480" height="480" rx="24" fill="var(--color-surface-container-low)" />
 
-      {/* Calles: una grilla irregular, apenas visible, para sugerir un mapa sin dibujar una ciudad real */}
-      <g stroke="var(--color-outline-variant)" strokeWidth="1.5" opacity="0.5">
-        <line x1="0" y1="90" x2="480" y2="80" />
-        <line x1="0" y1="200" x2="480" y2="210" />
-        <line x1="0" y1="340" x2="480" y2="330" />
-        <line x1="0" y1="420" x2="480" y2="425" />
-        <line x1="70" y1="0" x2="60" y2="480" />
-        <line x1="170" y1="0" x2="180" y2="480" />
-        <line x1="300" y1="0" x2="290" y2="480" />
-        <line x1="410" y1="0" x2="420" y2="480" />
-      </g>
+      {BLOCKS.map(([x, y, width, height], i) => (
+        <rect
+          key={i}
+          x={x}
+          y={y}
+          width={width}
+          height={height}
+          rx="16"
+          fill="var(--color-surface-container)"
+        />
+      ))}
 
       {/* Zona dibujada por el usuario */}
       <path
         d="M 130 150 L 300 110 L 360 220 L 320 320 L 170 340 L 110 250 Z"
         fill="#674bb5"
-        fillOpacity="0.15"
+        fillOpacity="0.18"
         stroke="#674bb5"
         strokeWidth="3"
         strokeLinejoin="round"
