@@ -1,35 +1,41 @@
 PROSPECTOR - PROXIMOS PASOS
-(actualizado 2026-08-30)
+(actualizado 2026-08-31)
 
 PENDIENTE INMEDIATO
 --------------------
-0. Verificar visualmente /login: se rediseño el markup (mismo sistema de
-   diseño que el resto) pero no se pudo confirmar en vivo en esta sesion
-   sin cerrar la sesion autenticada del browser (y no tengo tu contraseña
-   para volver a entrar). Deberia verse bien - usa los mismos tokens ya
-   probados en las otras 6 pantallas - pero dale una mirada.
+0. Logo del sidebar (components/Sidebar.tsx): hoy clickearlo solo
+   colapsa/expande el menú (onToggleCollapse). Pedido: que además lleve
+   a "/" (home de la app) - el botón puede seguir colapsando/expandiendo
+   pero necesita un link real al home (o separar "logo" de "toggle" en
+   dos elementos clickeables distintos).
 
-1. (Opcional) Google Places API para "Enriquecer con Google":
+1. Enriquecer "/" (app/page.tsx) - el instructivo quedó muy básico:
+   - Agregar stats rápidas: un resumen general tipo las stat tiles de
+     /dashboard (zonas buscadas, negocios encontrados, leads en
+     pipeline), pero más simple/liviano - nada extravagante, la idea es
+     dar un pantallazo del estado de la cuenta al entrar, no duplicar
+     el dashboard entero. Estos datos ya existen via GET /api/dashboard.
+   - Sumar más contenido al paso a paso actual (hoy son 4 cards con un
+     título y una linea de descripción cada una - se pidió explícitamente
+     "enriquecer", el instructivo actual quedó corto/vacío).
+
+2. Botones decorativos del TopBar (campana/notificaciones, chat, Upgrade,
+   avatar "V"): hoy no hacen nada — fue una decisión explícita en su
+   momento (ver YA RESUELTO 2026-08-30, "a pedido, para que calce
+   visualmente con los mockups de Stitch"). Ahora se pidió hacerlos
+   funcionar o agregarles funcionalidad real. Antes de implementar,
+   definir qué hace cada uno (no está especificado todavía):
+   - Campana: ¿centro de notificaciones real? ¿de qué eventos (nuevo
+     lead vencido, zona terminó de buscar, etc.)?
+   - Chat: ¿soporte, IA, o feedback?
+   - Upgrade: ¿hay un plan pago real o queda decorativo hasta que lo haya?
+   - Avatar "V": candidato más obvio a resolver primero - menú de cuenta
+     (mail, cerrar sesión, ¿configuración?) - ya existe esa lógica en
+     Sidebar.tsx (handleLogout) para reusar.
+
+3. (Opcional) Google Places API para "Enriquecer con Google":
    - Solo si querés completar telefono/web/rating de los negocios
    - Completar GOOGLE_MAPS_SERVER_API_KEY en .env.local (ver README)
-
-2. Signup público: hoy está deshabilitado a nivel app (no hay pantalla de
-   registro, solo /login). Nuevos usuarios se crean a mano desde el
-   Dashboard de Supabase (Authentication > Users > Add user).
-
-3. Cachear los fetches del cliente (mapa/zonas/pipeline/dashboard/detalle
-   de lead): hoy cada página hace su propio useEffect+fetch en cada
-   navegación, aunque nada haya cambiado en la DB. Evaluar migrar a SWR
-   (no React Query - la migración desde useEffect+fetch es casi 1:1, y
-   React Query pide un provider/setup más pesado que no hace falta acá):
-   sirve el dato cacheado al instante al volver a una sección, revalida
-   en segundo plano, y en las mutaciones propias (agregar lead, cambiar
-   etapa, enriquecer) se llama a mutate() para que el cambio se vea al
-   toque en vez de esperar la revalidación. Ver guías ya incluidas en
-   node_modules/next/dist/docs/01-app/02-guides/client-side-data-fetching/
-   (swr.md y tanstack-query.md) - es el patrón que Next.js recomienda para
-   este caso. Ojo: un cache "a mano" con TTL fijo sin invalidación NO es
-   buena idea acá (mostraría counts/leads desactualizados).
 
 4. Detalle menor detectado al probar el dedup: cuando una re-busqueda
    sobre una zona ya existente da como resultado que TODOS los negocios
@@ -43,6 +49,87 @@ PENDIENTE INMEDIATO
    en este caso puntual. No es un bug de datos, es un tema de que
    representa el numero. Si molesta, se puede arreglar sumando tambien
    los negocios "encontrados pero no nuevos" al conteo de esa zona.
+
+YA RESUELTO 2026-08-31
+------------------------
+- Cronjob de keepalive: GET /api/keepalive (protegido por CRON_SECRET,
+  exento del auth gate en proxy.ts) + vercel.json con cron diario, para
+  que Supabase free tier no pause el proyecto por inactividad.
+- Fix de deploy en Vercel: Turbopack (default de build en Next 16) no
+  podía parsear el package.json de duckdb (campo "binary" de
+  node-pre-gyp) -> se pasó "build": "next build --webpack" en
+  package.json (documentado como opt-out oficial en los guides de
+  Next 16 bundleados).
+- Fix 502 real en /api/search-zone: DuckDB escribía a ~/.duckdb por
+  default (INSTALL httpfs), pero en el runtime serverless de Vercel solo
+  /tmp es escribible -> el proceso nativo moría sin tirar un error de JS
+  atajable. Se agregó SET home_directory='/tmp' antes de INSTALL httpfs
+  (lib/overture.ts), más maxDuration=60 en la route (la query a Overture
+  tarda 15-30s, más que el default de Vercel).
+- Recuperar contraseña: /forgot-password + /auth/callback (canjea el
+  code de Supabase server-side) + /reset-password, gateado por sesión
+  real (no se puede llegar sin pasar por el link del mail).
+- Signup público con aprobación del equipo: /signup crea la cuenta real
+  en Supabase Auth, pero proxy.ts chequea profiles.approved antes de
+  dejar pasar a cualquier página/API real - sin aprobar, cae en
+  /pending-approval. La aprobación es manual, tildando profiles.approved
+  desde el Table Editor de Supabase (a propósito, sin pantalla de
+  aprobación en la app). Migración: supabase/migrations/
+  0005_profiles_approval.sql (crea profiles, trigger de auto-insert en
+  signup, backfill de usuarios existentes como aprobados, y actualiza
+  las RLS policies de 0002 para exigir aprobación además de "authenticated"
+  - así alguien recién registrado no puede pegarle directo a la REST API
+  con la anon key salteándose el proxy).
+- Rediseño de /login: layout de dos columnas (ilustración + form), más
+  grande (antes quedaba una tarjeta chica perdida en el medio de la
+  pantalla). La ilustración pasó por varias iteraciones - grilla lisa
+  (se veía como papel cuadriculado) -> bloques de "manzanas" (se veía
+  como waffle) -> curvas genéricas (quedó feo) -> versión final basada
+  en un lugar real (Plaza de Mayo: la grilla del microcentro + las
+  Diagonales Norte/Sur convergiendo en la plaza + Casa Rosada), que sí
+  se lee como mapa real en vez de una textura abstracta.
+- Tiles del mapa: Esri Light Gray Canvas (gratis, sin key) solo tiene
+  resolución nativa hasta z16 -> pedía más zoom y salía pixelado. Se
+  probó OpenFreeMap/CartoDB Positron vectorial (nítido a cualquier zoom,
+  sigue siendo gratis y sin key) via MapLibre GL + @maplibre/maplibre-gl-leaflet,
+  pero renderizaba un canvas en blanco en cualquier máquina sin
+  aceleración de GPU real (confirmado en este entorno Y en el browser
+  real del usuario) - WebGL no es una dependencia aceptable acá. Se
+  volvió a tiles raster simples, ahora de OpenStreetMap estándar
+  (tile.openstreetmap.org): sin key, nítido hasta z19, sin WebGL.
+  Atribución visible a propósito (antes oculta "a pedido" con Esri) -
+  la licencia ODbL de OSM la exige de verdad al pegarle directo a sus
+  tile servers.
+- Markers de negocios en /mapa ahora son clickeables: al clickear uno se
+  abre un popup de Leaflet con el mismo NegocioCard que la lista de
+  resultados (mismo componente, extraído a components/NegocioCard.tsx),
+  con los mismos botones de "Enriquecer con Google" / "Agregar al
+  pipeline" funcionando igual desde el popup.
+- Toggle de colapsar/expandir en /mapa: un botón junto a "Resultados"
+  colapsa el mapa para que la lista ocupe todo el ancho (mejor lectura
+  con muchos resultados) y viceversa. MapCanvas ahora usa un
+  ResizeObserver + map.invalidateSize() porque Leaflet no se entera solo
+  de un resize por CSS.
+- Fixes de mobile: las cards de negocio ya no fuerzan scroll horizontal
+  de toda la página (min-w-0 + break-words/break-all en dirección y web,
+  que antes podían desbordar el contenedor). El BottomNav ahora es
+  position:fixed (antes se scrolleaba con la página en Safari/Chrome
+  mobile, donde el 100vh real no siempre cubre el viewport visible) con
+  el padding-bottom correspondiente en <main>.
+- Cacheo de lecturas del cliente con SWR (/zonas, /dashboard, /pipeline,
+  /leads/[id]): antes cada página hacía su propio useEffect+fetch en
+  cada navegación aunque nada hubiera cambiado. Ahora sirven el dato
+  cacheado al instante y revalidan en segundo plano (patrón oficial de
+  Next.js, ver node_modules/next/dist/docs/.../client-side-data-fetching/
+  swr.md), y las mutaciones (drag&drop de etapa, editar campos de un
+  lead, agregar interacción) usan mutate() con optimisticData +
+  rollbackOnError en vez de "actualizar estado y refetchear si falla" a
+  mano. /mapa queda afuera a propósito: su fetch es un POST disparado
+  por el usuario (dibujar/re-buscar zona), no una lectura cacheable.
+- Nueva pantalla de home ("/"): reemplaza el placeholder viejo (markup
+  pre-rediseño, colores Tailwind crudos) por un instructivo de 4 pasos
+  (Mapa -> Zonas -> Pipeline -> Dashboard) + botón al mapa. Ver punto 1
+  de PENDIENTE INMEDIATO: se pidió enriquecerla más, esta es la v1.
 
 YA RESUELTO 2026-08-30
 ------------------------
@@ -63,7 +150,8 @@ YA RESUELTO 2026-08-30
 - Elementos decorativos sin backend real (Upgrade, notificaciones, chat,
   avatar) quedaron como decoracion inerte en el TopBar, a pedido
   explicito - no hacen nada todavia, es solo para que calce visualmente
-  con los mockups de Stitch desde el dia uno.
+  con los mockups de Stitch desde el dia uno. (Ver punto 2 de PENDIENTE
+  INMEDIATO: ahora se pidió resolverlos.)
 - Los 6 flujos reales (mapa, zonas, pipeline, dashboard, detalle de lead,
   login) se reescribieron visualmente con el nuevo sistema mantiendo
   toda la logica/funcionalidad intacta - no se toco ningun handler ni
@@ -74,8 +162,7 @@ YA RESUELTO 2026-08-30
   dibujar zona), pipeline (drag & drop funcionando, agregar nota),
   zonas, dashboard, detalle de lead, y mobile (390px) en las 6 pantallas
   via un iframe inyectado en la misma sesion autenticada (la herramienta
-  de resize de ventana no funciona en este entorno). /login no se pudo
-  ver en vivo sin cerrar la sesion (ver PENDIENTE arriba).
+  de resize de ventana no funciona en este entorno).
 
 YA RESUELTO 2026-08-29
 ------------------------
@@ -86,10 +173,9 @@ YA RESUELTO 2026-08-29
 - proxy.ts (antes middleware.ts, renombrado en Next 16) protege todas las
   paginas y las API routes: sin sesion redirige a /login (paginas) o
   devuelve 401 (api)
-- Tiles cambiados de OSM a Esri "Light Gray Canvas" (gratis, sin API key,
-  estilo minimalista gris con agua celeste) en components/MapCanvas.tsx.
-  OJO: se probo CartoDB Positron primero pero ahora exige API key incluso
-  en su tier gratuito, por eso el cambio a Esri.
+- Tiles cambiados de OSM a Esri "Light Gray Canvas" en components/
+  MapCanvas.tsx. (Ver YA RESUELTO 2026-08-31: se volvió a OSM por el
+  límite de zoom nativo de Esri.)
 - Pagina de detalle de lead (/leads/[id]): historial de interacciones
   (tabla interacciones, ya existia en el schema sin UI), etapa/proxima
   accion/notas editables. Nuevas rutas: GET /api/leads/:id, POST
