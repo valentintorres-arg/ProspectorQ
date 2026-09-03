@@ -45,8 +45,14 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
   }
 
   return (
+    // z-[1200] (no z-50): position:fixed + z-index hacen del nav entero un
+    // participante de stacking context — con z-50 quedaba por debajo de los
+    // overlays z-[1000] del mapa (components/MapCanvas.tsx), así que los
+    // dropdowns de notificaciones/avatar de acá adentro se veían tapados
+    // por el mapa sin importar SU propio z-index (mismo bug que tenía el
+    // header, ver components/TopBar.tsx).
     <nav
-      className={`fixed left-0 top-0 z-50 hidden h-screen flex-col border-r border-outline-variant/10 bg-surface-container-low p-4 shadow-[0px_4px_20px_rgba(103,75,181,0.04)] transition-[width] duration-200 md:flex ${
+      className={`fixed left-0 top-0 z-[1200] hidden h-screen flex-col border-r border-outline-variant/10 bg-surface-container-low p-4 shadow-[0px_4px_20px_rgba(103,75,181,0.04)] transition-[width] duration-200 md:flex ${
         collapsed ? 'w-20' : 'w-64'
       }`}
     >
