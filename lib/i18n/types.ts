@@ -1,4 +1,4 @@
-import type { Etapa, TipoInteraccion } from '@/lib/types';
+import type { Etapa, MembershipRole, TipoInteraccion } from '@/lib/types';
 
 export type Lang = 'es' | 'en';
 
@@ -26,6 +26,7 @@ export interface Dictionary {
     pipeline: string;
     dashboard: string;
     dashboardShort: string;
+    organizacion: string;
     newZone: string;
     logout: string;
     collapseMenu: string;
@@ -205,6 +206,32 @@ export interface Dictionary {
     errorAddingInteraction: string;
     unexpectedError: string;
   };
+  organizacion: {
+    title: string;
+    subtitle: string;
+    switchOrg: string;
+    yourRole: string;
+    members: string;
+    role: string;
+    remove: string;
+    inviteTitle: string;
+    inviteEmailPlaceholder: string;
+    invite: string;
+    inviting: string;
+    pendingInvitations: string;
+    revoke: string;
+    receivedInvitations: string;
+    invitedTo: (org: string) => string;
+    accept: string;
+    declining: string;
+    decline: string;
+    noPendingInvitations: string;
+    noReceivedInvitations: string;
+    loading: string;
+    errorLoading: string;
+    unexpectedError: string;
+  };
+  roles: Record<MembershipRole, string>;
   etapas: Record<Etapa, string>;
   interacciones: Record<TipoInteraccion, string>;
 }

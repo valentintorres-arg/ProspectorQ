@@ -2,8 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import useSWR from 'swr';
 import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
+import type { OrgMembership } from '@/lib/types';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
 import Logo from './Logo';
@@ -19,11 +21,14 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
   const router = useRouter();
   const { t } = useLanguage();
 
+  const { data: orgsData } = useSWR<{ orgs: OrgMembership[]; activeOrgId: string | null }>('/api/orgs');
+
   const NAV_ITEMS = [
     { href: '/mapa', label: t.nav.mapa, icon: 'map' },
     { href: '/zonas', label: t.nav.zonas, icon: 'layers' },
     { href: '/pipeline', label: t.nav.pipeline, icon: 'view_kanban' },
     { href: '/dashboard', label: t.nav.dashboard, icon: 'bar_chart' },
+    { href: '/organizacion', label: t.nav.organizacion, icon: 'groups' },
   ];
 
   async function handleLogout() {
@@ -31,6 +36,19 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
     await supabase.auth.signOut();
     router.push('/login');
     router.refresh();
+  }
+
+  async function handleSwitchOrg(orgId: string) {
+    await fetch('/api/orgs/switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orgId }),
+    });
+    // Hard reload a propósito: cambiar de org invalida el cache de SWR de
+    // TODA la app (leads, dashboard, zonas — ninguno incluye el org_id en
+    // su key), no solo lo que renderiza el sidebar. router.refresh() no
+    // alcanza a limpiar eso.
+    window.location.reload();
   }
 
   return (
@@ -122,6 +140,26 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
       </div>
 
       <div className="flex flex-col gap-2 border-t border-outline-variant/10 pt-4">
+        {/* Solo aparece si el usuario pertenece a más de una organización —
+            con una sola, no hay nada que elegir y el sidebar queda igual
+            que antes de que existiera multi-org. */}
+        {!collapsed && orgsData && orgsData.orgs.length > 1 && (
+          <label className="font-label flex flex-col gap-1 px-1 text-[10px] uppercase tracking-wide text-on-surface-variant">
+            {t.organizacion.switchOrg}
+            <select
+              value={orgsData.activeOrgId ?? ''}
+              onChange={(e) => handleSwitchOrg(e.target.value)}
+              className="rounded-lg border-0 bg-surface-container-highest/50 px-2 py-1.5 text-xs font-normal normal-case text-on-surface focus:ring-2 focus:ring-primary-container focus:outline-none"
+            >
+              {orgsData.orgs.map((org) => (
+                <option key={org.orgId} value={org.orgId}>
+                  {org.orgNombre}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
         {collapsed ? (
           // Colapsada no hay lugar para la tarjeta ovalada (el riel mide
           // 80px, con el padding del nav quedan 48px de contenido — justo

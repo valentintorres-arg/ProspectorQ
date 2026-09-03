@@ -1,5 +1,27 @@
 export type Fuente = 'osm' | 'google' | 'overture';
 
+export type MembershipRole = 'owner' | 'admin' | 'member';
+
+export interface OrgMembership {
+  orgId: string;
+  orgNombre: string;
+  role: MembershipRole;
+}
+
+export interface OrgMember {
+  id: string;
+  email: string;
+  role: MembershipRole;
+}
+
+export interface Invitation {
+  id: string;
+  orgId: string;
+  orgNombre: string;
+  email: string;
+  createdAt: string;
+}
+
 export type Etapa =
   | 'identificado'
   | 'contactado'
