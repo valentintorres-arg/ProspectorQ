@@ -13,6 +13,7 @@ export default function BottomNav() {
     { href: '/zonas', label: t.nav.zonas, icon: 'layers' },
     { href: '/pipeline', label: t.nav.pipeline, icon: 'view_kanban' },
     { href: '/dashboard', label: t.nav.dashboardShort, icon: 'bar_chart' },
+    { href: '/organizacion', label: t.nav.organizacion, icon: 'groups' },
   ];
 
   return (

@@ -1,8 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
@@ -10,15 +8,7 @@ import NotificationsButton from './NotificationsButton';
 import AvatarMenu from './AvatarMenu';
 
 export default function TopBar({ email }: { email: string }) {
-  const router = useRouter();
   const { t } = useLanguage();
-
-  async function handleLogout() {
-    const supabase = createBrowserSupabase();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
-  }
 
   return (
     // relative + z-[1200]: backdrop-blur (filter) crea su propio stacking
@@ -41,16 +31,15 @@ export default function TopBar({ email }: { email: string }) {
         <AvatarMenu email={email} />
       </div>
 
-      <div className="flex items-center gap-2 md:hidden">
+      {/* Mobile: mismos controles reales que el desktop (antes solo tenía
+          logout directo — campanita, Upgrade y Configuración quedaban
+          inalcanzables desde el celular). El logout ahora vive adentro del
+          dropdown del avatar, así que no hace falta un botón aparte. */}
+      <div className="flex items-center gap-1 md:hidden">
         <LanguageToggle />
         <ThemeToggle />
-        <button
-          onClick={handleLogout}
-          aria-label={t.nav.logout}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-container-highest"
-        >
-          <span className="material-symbols-outlined text-[20px]">logout</span>
-        </button>
+        <NotificationsButton />
+        <AvatarMenu email={email} />
       </div>
     </header>
   );
