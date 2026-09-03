@@ -223,6 +223,10 @@ const en: Dictionary = {
   organizacion: {
     title: 'Organization',
     subtitle: "Manage your organization's members and invitations.",
+    createOrg: 'New organization',
+    createOrgPlaceholder: 'Organization name',
+    create: 'Create',
+    creating: 'Creating…',
     switchOrg: 'Switch organization',
     yourRole: 'Your role',
     members: 'Members',

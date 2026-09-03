@@ -225,6 +225,10 @@ const es: Dictionary = {
   organizacion: {
     title: 'Organización',
     subtitle: 'Gestioná los miembros de tu organización y las invitaciones.',
+    createOrg: 'Nueva organización',
+    createOrgPlaceholder: 'Nombre de la organización',
+    create: 'Crear',
+    creating: 'Creando…',
     switchOrg: 'Cambiar de organización',
     yourRole: 'Tu rol',
     members: 'Miembros',

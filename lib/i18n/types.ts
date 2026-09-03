@@ -208,6 +208,10 @@ export interface Dictionary {
   organizacion: {
     title: string;
     subtitle: string;
+    createOrg: string;
+    createOrgPlaceholder: string;
+    create: string;
+    creating: string;
     switchOrg: string;
     yourRole: string;
     members: string;

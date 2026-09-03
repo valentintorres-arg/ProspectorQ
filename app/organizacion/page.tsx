@@ -33,6 +33,9 @@ export default function OrganizacionPage() {
   const [inviting, setInviting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [decliningId, setDecliningId] = useState<string | null>(null);
+  const [creatingOrg, setCreatingOrg] = useState(false);
+  const [newOrgName, setNewOrgName] = useState('');
+  const [creating, setCreating] = useState(false);
 
   const canManage = org?.myRole === 'owner' || org?.myRole === 'admin';
   const isOwner = org?.myRole === 'owner';
@@ -122,6 +125,29 @@ export default function OrganizacionPage() {
     }
   }
 
+  async function handleCreateOrg(e: FormEvent) {
+    e.preventDefault();
+    if (!newOrgName.trim()) return;
+    setCreating(true);
+    setActionError(null);
+    try {
+      const res = await fetch('/api/orgs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre: newOrgName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? t.organizacion.unexpectedError);
+      // Igual que aceptar una invitación: la org nueva queda activa (ver la
+      // API route), recargar es lo más simple para que todo (sidebar,
+      // pipeline, dashboard) arranque limpio con ella.
+      window.location.reload();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : t.organizacion.unexpectedError);
+      setCreating(false);
+    }
+  }
+
   async function handleDecline(id: string) {
     setDecliningId(id);
     setActionError(null);
@@ -156,10 +182,55 @@ export default function OrganizacionPage() {
 
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="font-headline text-2xl font-semibold text-on-surface">{org.nombre}</h1>
-      <p className="mb-6 text-sm text-on-surface-variant">
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="font-headline text-2xl font-semibold text-on-surface">{org.nombre}</h1>
+        {!creatingOrg && (
+          <button
+            onClick={() => setCreatingOrg(true)}
+            className="font-label flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-sm font-medium text-on-primary hover:opacity-90"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            {t.organizacion.createOrg}
+          </button>
+        )}
+      </div>
+      <p className="mb-4 text-sm text-on-surface-variant">
         {t.organizacion.yourRole}: <span className="font-semibold">{t.roles[org.myRole]}</span>
       </p>
+
+      {creatingOrg && (
+        <form
+          onSubmit={handleCreateOrg}
+          className="mb-6 flex flex-wrap gap-2 rounded-xl border border-outline-variant/20 bg-surface-container-lowest p-4"
+        >
+          <input
+            type="text"
+            required
+            autoFocus
+            placeholder={t.organizacion.createOrgPlaceholder}
+            value={newOrgName}
+            onChange={(e) => setNewOrgName(e.target.value)}
+            className="min-w-0 flex-1 rounded-md border-0 bg-surface-container-low px-3 py-2 text-sm text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary-container focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={creating || !newOrgName.trim()}
+            className="font-label shrink-0 rounded-md bg-primary px-3 py-2 text-sm font-medium text-on-primary hover:opacity-90 disabled:opacity-50"
+          >
+            {creating ? t.organizacion.creating : t.organizacion.create}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCreatingOrg(false);
+              setNewOrgName('');
+            }}
+            className="font-label shrink-0 rounded-md px-3 py-2 text-sm font-medium text-on-surface-variant hover:bg-surface-container-highest"
+          >
+            {t.common.cancel}
+          </button>
+        </form>
+      )}
 
       {actionError && (
         <p className="mb-4 rounded-lg bg-error-container px-3 py-2 text-sm text-on-error-container">{actionError}</p>
