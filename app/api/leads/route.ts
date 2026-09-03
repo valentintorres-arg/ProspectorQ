@@ -1,15 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getCurrentOrgId } from '@/lib/supabase/auth-server';
 
 // GET /api/leads?etapa=contactado  -> lista leads (con el negocio embebido), filtrable por etapa
 export async function GET(req: NextRequest) {
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
     const etapa = req.nextUrl.searchParams.get('etapa');
 
     let query = supabase
       .from('leads')
       .select('*, negocio:negocios(*)')
+      .eq('org_id', orgId)
       .order('updated_at', { ascending: false });
 
     if (etapa) {
@@ -37,6 +44,11 @@ export async function POST(req: NextRequest) {
   const supabase = createServiceClient();
 
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const body = await req.json();
 
     if (Array.isArray(body.negocioIds)) {
@@ -48,8 +60,8 @@ export async function POST(req: NextRequest) {
       const { data, error } = await supabase
         .from('leads')
         .upsert(
-          negocioIds.map((id) => ({ negocio_id: id })),
-          { onConflict: 'negocio_id', ignoreDuplicates: true }
+          negocioIds.map((id) => ({ negocio_id: id, org_id: orgId })),
+          { onConflict: 'org_id,negocio_id', ignoreDuplicates: true }
         )
         .select('*, negocio:negocios(*)');
 
@@ -69,7 +81,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error } = await supabase
       .from('leads')
-      .insert({ negocio_id: negocioId })
+      .insert({ negocio_id: negocioId, org_id: orgId })
       .select('*, negocio:negocios(*)')
       .single();
 

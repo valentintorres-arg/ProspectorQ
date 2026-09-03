@@ -51,6 +51,7 @@ export interface Negocio {
 
 export interface Lead {
   id: string;
+  org_id: string;
   negocio_id: string;
   etapa: Etapa;
   proxima_accion: string | null;
@@ -68,6 +69,7 @@ export const TIPOS_INTERACCION: TipoInteraccion[] = ['nota', 'llamada', 'mail', 
 
 export interface Interaccion {
   id: string;
+  org_id: string;
   lead_id: string;
   tipo: TipoInteraccion;
   descripcion: string;

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getCurrentOrgId } from '@/lib/supabase/auth-server';
 import { ETAPAS } from '@/lib/types';
 
 // GET /api/dashboard -> métricas agregadas para /dashboard.
@@ -8,12 +9,17 @@ import { ETAPAS } from '@/lib/types';
 // evita depender de RPCs extra para cada corte.
 export async function GET() {
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
 
     const [zonasRes, negociosRes, leadsRes, negociosRubroRes] = await Promise.all([
       supabase.from('zonas').select('*', { count: 'exact', head: true }),
       supabase.from('negocios').select('*', { count: 'exact', head: true }),
-      supabase.from('leads').select('etapa'),
+      supabase.from('leads').select('etapa').eq('org_id', orgId),
       supabase.from('negocios').select('rubro'),
     ]);
 

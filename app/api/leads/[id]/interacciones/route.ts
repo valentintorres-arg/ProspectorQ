@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getCurrentOrgId } from '@/lib/supabase/auth-server';
 import type { TipoInteraccion } from '@/lib/types';
 
 const TIPOS_VALIDOS: TipoInteraccion[] = ['nota', 'llamada', 'mail', 'reunion', 'whatsapp'];
@@ -9,6 +10,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
 
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
     const body = await req.json();
     const tipo: TipoInteraccion = body.tipo;
@@ -21,9 +27,23 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Falta descripcion' }, { status: 400 });
     }
 
+    // El lead tiene que ser de esta org antes de dejar registrar nada en él
+    // (si no, cualquier cuenta aprobada podría loguear interacciones sobre
+    // el id de un lead ajeno con solo adivinarlo).
+    const { data: lead, error: leadError } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .single();
+
+    if (leadError || !lead) {
+      return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+    }
+
     const { data, error } = await supabase
       .from('interacciones')
-      .insert({ lead_id: id, tipo, descripcion: descripcion.trim() })
+      .insert({ lead_id: id, org_id: orgId, tipo, descripcion: descripcion.trim() })
       .select()
       .single();
 

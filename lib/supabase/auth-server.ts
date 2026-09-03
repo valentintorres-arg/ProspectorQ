@@ -34,3 +34,16 @@ export async function getUser() {
   const { data } = await supabase.auth.getUser();
   return data.user;
 }
+
+// Org del usuario logueado, para que las API routes (que usan la service
+// key y por lo tanto bypassan RLS) filtren leads/interacciones a mano.
+export async function getCurrentOrgId(): Promise<string | null> {
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data } = await supabase.from('profiles').select('org_id').eq('id', user.id).single();
+  return data?.org_id ?? null;
+}

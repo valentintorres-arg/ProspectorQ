@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getCurrentOrgId } from '@/lib/supabase/auth-server';
 import type { Etapa } from '@/lib/types';
 
 const ETAPAS_VALIDAS: Etapa[] = [
@@ -16,12 +17,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
 
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
 
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select('*, negocio:negocios(*)')
       .eq('id', id)
+      .eq('org_id', orgId)
       .single();
 
     if (leadError) {
@@ -33,6 +40,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       .from('interacciones')
       .select('*')
       .eq('lead_id', id)
+      .eq('org_id', orgId)
       .order('created_at', { ascending: false });
 
     if (interaccionesError) {
@@ -52,6 +60,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
 
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
     const body = await req.json();
     const update: Record<string, unknown> = {};
@@ -74,10 +87,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       .from('leads')
       .update(update)
       .eq('id', id)
+      .eq('org_id', orgId)
       .select('*, negocio:negocios(*)')
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+      }
       console.error(error);
       return NextResponse.json({ error: 'No se pudo actualizar el lead' }, { status: 500 });
     }
@@ -94,8 +111,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
 
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
-    const { error } = await supabase.from('leads').delete().eq('id', id);
+    const { error } = await supabase.from('leads').delete().eq('id', id).eq('org_id', orgId);
 
     if (error) {
       console.error(error);
