@@ -17,15 +17,20 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     }
 
     const supabase = createServiceClient();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('invitations')
       .delete()
       .eq('id', id)
-      .eq('org_id', membership.orgId);
+      .eq('org_id', membership.orgId)
+      .select('id')
+      .maybeSingle();
 
     if (error) {
       console.error(error);
       return NextResponse.json({ error: 'No se pudo revocar la invitación' }, { status: 500 });
+    }
+    if (!data) {
+      return NextResponse.json({ error: 'Invitación no encontrada' }, { status: 404 });
     }
 
     return NextResponse.json({ ok: true });
