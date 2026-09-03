@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
-import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import type { OrgMembership } from '@/lib/types';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
+import NotificationsButton from './NotificationsButton';
+import AvatarMenu from './AvatarMenu';
 import Logo from './Logo';
 
 interface SidebarProps {
@@ -18,7 +19,6 @@ interface SidebarProps {
 
 export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
-  const router = useRouter();
   const { t } = useLanguage();
 
   const { data: orgsData } = useSWR<{ orgs: OrgMembership[]; activeOrgId: string | null }>('/api/orgs');
@@ -30,13 +30,6 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
     { href: '/dashboard', label: t.nav.dashboard, icon: 'bar_chart' },
     { href: '/organizacion', label: t.nav.organizacion, icon: 'groups' },
   ];
-
-  async function handleLogout() {
-    const supabase = createBrowserSupabase();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
-  }
 
   async function handleSwitchOrg(orgId: string) {
     await fetch('/api/orgs/switch', {
@@ -179,28 +172,39 @@ export default function Sidebar({ email, collapsed, onToggleCollapse }: SidebarP
           </div>
         )}
 
-        {/* Cuenta: el mail y "cerrar sesión" son un solo botón/unidad — al
-            pasar el mouse todo el bloque se tiñe de error, dejando claro que
-            la acción cierra la sesión de ESE mail. */}
-        <button
-          onClick={handleLogout}
-          title={collapsed ? `${email} — ${t.nav.logout}` : undefined}
-          className={`group flex items-center rounded-xl py-2 transition-colors duration-150 hover:bg-error-container/50 ${
-            collapsed ? 'justify-center px-0' : 'justify-between gap-2 px-2 text-left'
-          }`}
-        >
-          {!collapsed && (
-            <span
-              className="font-label min-w-0 truncate text-xs text-on-surface-variant transition-colors duration-150 group-hover:text-on-error-container"
-              title={email}
+        {/* Notificaciones, Upgrade y cuenta: antes vivían en el TopBar de
+            desktop (ver components/TopBar.tsx, ahora mobile-only) — se
+            movieron acá para que el contenido, el mapa sobre todo, use toda
+            la altura de la pantalla sin una barra fija arriba. Los
+            dropdowns abren hacia arriba (openUpward) porque este bloque
+            está pegado al fondo del sidebar; abrir hacia abajo se saldría
+            de la pantalla. */}
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-2.5">
+            <NotificationsButton openUpward />
+            <Link
+              href="/upgrade"
+              title={t.nav.upgrade}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-tertiary-container text-on-tertiary-container hover:opacity-90"
             >
-              {email}
-            </span>
-          )}
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-on-surface-variant transition-colors duration-150 group-hover:text-on-error-container">
-            <span className="material-symbols-outlined text-[18px]">logout</span>
-          </span>
-        </button>
+              <span className="material-symbols-outlined text-[16px]">rocket_launch</span>
+            </Link>
+            <AvatarMenu email={email} openUpward />
+          </div>
+        ) : (
+          <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-3">
+              <NotificationsButton openUpward />
+              <Link
+                href="/upgrade"
+                className="font-label rounded-full bg-tertiary-container px-3 py-1 text-xs font-bold text-on-tertiary-container hover:opacity-90"
+              >
+                {t.nav.upgrade}
+              </Link>
+            </div>
+            <AvatarMenu email={email} openUpward />
+          </div>
+        )}
       </div>
     </nav>
   );

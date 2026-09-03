@@ -21,7 +21,7 @@ interface NotificationItem {
   createdAt: string | null;
 }
 
-export default function NotificationsButton() {
+export default function NotificationsButton({ openUpward = false }: { openUpward?: boolean }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -104,7 +104,11 @@ export default function NotificationsButton() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-[1100] mt-2 w-80 max-w-[90vw] overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-[0px_8px_24px_rgba(103,75,181,0.12)]">
+        <div
+          className={`absolute z-[1100] w-80 max-w-[90vw] overflow-hidden rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-[0px_8px_24px_rgba(103,75,181,0.12)] ${
+            openUpward ? 'bottom-full left-0 mb-2' : 'right-0 top-full mt-2'
+          }`}
+        >
           <div className="border-b border-outline-variant/10 px-4 py-3">
             <p className="font-title text-sm font-semibold text-on-surface">{t.notifications.title}</p>
           </div>
