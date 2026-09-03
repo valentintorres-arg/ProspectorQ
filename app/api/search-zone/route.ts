@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as turf from '@turf/turf';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getCurrentOrgId } from '@/lib/supabase/auth-server';
 import { sonElMismoNegocio } from '@/lib/dedup';
 import { buscarNegociosOverture } from '@/lib/overture';
 import type { Negocio } from '@/lib/types';
@@ -12,6 +13,11 @@ export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const body = await req.json();
     const polygon: GeoJSON.Polygon = body.polygon;
     const nombreZona: string = body.nombreZona ?? 'Zona sin nombre';
@@ -44,6 +50,7 @@ export async function POST(req: NextRequest) {
     const { data: zonaId, error: zonaError } = await supabase.rpc('insert_zona', {
       p_nombre: nombreZona,
       p_geojson: JSON.stringify(polygon),
+      p_org_id: orgId,
     });
 
     if (zonaError) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getCurrentOrgId } from '@/lib/supabase/auth-server';
+import { getCurrentOrgId, getUser } from '@/lib/supabase/auth-server';
+import { crearNotificacion } from '@/lib/notifications';
 import type { Etapa } from '@/lib/types';
 
 const ETAPAS_VALIDAS: Etapa[] = [
@@ -83,6 +84,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 });
     }
 
+    // Se lee la etapa anterior ANTES de actualizar, para poder mandarla en
+    // el detalle de la notificación si esta edición cambia de etapa.
+    const { data: previo } = await supabase
+      .from('leads')
+      .select('etapa, negocio:negocios(nombre)')
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .single();
+
     const { data, error } = await supabase
       .from('leads')
       .update(update)
@@ -97,6 +107,28 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
       console.error(error);
       return NextResponse.json({ error: 'No se pudo actualizar el lead' }, { status: 500 });
+    }
+
+    const user = await getUser();
+    if (user) {
+      const negocioNombre = (previo?.negocio as unknown as { nombre: string } | null)?.nombre;
+      if (update.etapa !== undefined) {
+        await crearNotificacion(supabase, {
+          orgId,
+          actorId: user.id,
+          tipo: 'lead_etapa_cambiada',
+          leadId: id,
+          detalle: { negocioNombre, etapaAnterior: previo?.etapa, etapaNueva: update.etapa },
+        });
+      } else {
+        await crearNotificacion(supabase, {
+          orgId,
+          actorId: user.id,
+          tipo: 'lead_actualizado',
+          leadId: id,
+          detalle: { negocioNombre },
+        });
+      }
     }
 
     return NextResponse.json({ lead: data });
@@ -117,11 +149,30 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     }
 
     const supabase = createServiceClient();
+
+    const { data: previo } = await supabase
+      .from('leads')
+      .select('negocio:negocios(nombre)')
+      .eq('id', id)
+      .eq('org_id', orgId)
+      .single();
+
     const { error } = await supabase.from('leads').delete().eq('id', id).eq('org_id', orgId);
 
     if (error) {
       console.error(error);
       return NextResponse.json({ error: 'No se pudo borrar el lead' }, { status: 500 });
+    }
+
+    const user = await getUser();
+    if (user && previo) {
+      const negocioNombre = (previo.negocio as unknown as { nombre: string } | null)?.nombre;
+      await crearNotificacion(supabase, {
+        orgId,
+        actorId: user.id,
+        tipo: 'lead_eliminado',
+        detalle: { negocioNombre },
+      });
     }
 
     return NextResponse.json({ ok: true });

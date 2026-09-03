@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createServiceClient } from '@/lib/supabase/server';
 import { ACTIVE_ORG_COOKIE, getUser } from '@/lib/supabase/auth-server';
+import { crearNotificacion } from '@/lib/notifications';
 
 // POST /api/orgs/invitations/:id/accept -> te suma como member a la org de
 // la invitación (tiene que estar dirigida a tu email) y la deja como org
@@ -41,6 +42,13 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
 
     await supabase.from('invitations').delete().eq('id', id);
+
+    await crearNotificacion(supabase, {
+      orgId: invitation.org_id,
+      actorId: user.id,
+      tipo: 'miembro_sumado',
+      detalle: { email: user.email },
+    });
 
     const cookieStore = await cookies();
     cookieStore.set(ACTIVE_ORG_COOKIE, invitation.org_id, {

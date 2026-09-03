@@ -1,14 +1,14 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createBrowserSupabase } from '@/lib/supabase/client';
 import { useLanguage } from '@/lib/i18n/LanguageProvider';
 import ThemeToggle from './ThemeToggle';
 import LanguageToggle from './LanguageToggle';
+import NotificationsButton from './NotificationsButton';
+import AvatarMenu from './AvatarMenu';
 
-// Campanita/chat/Upgrade/avatar quedan como decoración inerte a propósito
-// (no hay notificaciones, chat ni billing todavía) — así el look calza con
-// el diseño de Stitch desde el día uno sin prometer funcionalidad que no existe.
 export default function TopBar({ email }: { email: string }) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -26,28 +26,14 @@ export default function TopBar({ email }: { email: string }) {
       <div className="hidden flex-1 md:block" />
 
       <div className="hidden items-center gap-4 md:flex">
-        <button
-          disabled
-          aria-label={t.nav.notifications}
-          className="cursor-default text-on-surface-variant/50"
-        >
-          <span className="material-symbols-outlined">notifications</span>
-        </button>
-        <button disabled aria-label={t.nav.chat} className="cursor-default text-on-surface-variant/50">
-          <span className="material-symbols-outlined">chat_bubble</span>
-        </button>
-        <button
-          disabled
-          className="cursor-default rounded-full bg-tertiary-container px-4 py-1.5 text-xs font-bold text-on-tertiary-container opacity-70"
+        <NotificationsButton />
+        <Link
+          href="/upgrade"
+          className="rounded-full bg-tertiary-container px-4 py-1.5 text-xs font-bold text-on-tertiary-container hover:opacity-90"
         >
           {t.nav.upgrade}
-        </button>
-        <div
-          className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant/20 bg-surface-container-highest font-label text-xs font-semibold text-on-surface-variant"
-          title={email}
-        >
-          {email.slice(0, 1).toUpperCase()}
-        </div>
+        </Link>
+        <AvatarMenu email={email} />
       </div>
 
       <div className="flex items-center gap-2 md:hidden">

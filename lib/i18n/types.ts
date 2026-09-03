@@ -32,7 +32,6 @@ export interface Dictionary {
     collapseMenu: string;
     expandMenu: string;
     notifications: string;
-    chat: string;
     upgrade: string;
   };
   theme: {
@@ -230,6 +229,39 @@ export interface Dictionary {
     loading: string;
     errorLoading: string;
     unexpectedError: string;
+  };
+  notifications: {
+    title: string;
+    empty: string;
+    leadCreado: (actorEmail: string, negocioNombre: string) => string;
+    leadCreadoBulk: (actorEmail: string, count: number) => string;
+    leadEtapaCambiada: (actorEmail: string, negocioNombre: string, etapaAnterior: string, etapaNueva: string) => string;
+    leadActualizado: (actorEmail: string, negocioNombre: string) => string;
+    leadEliminado: (actorEmail: string, negocioNombre: string) => string;
+    interaccionAgregada: (actorEmail: string, negocioNombre: string, tipoInteraccion: string) => string;
+    miembroSumado: (email: string) => string;
+    leadVencido: (negocioNombre: string) => string;
+    invitacionRecibida: (orgNombre: string) => string;
+    errorLoading: string;
+  };
+  upgrade: {
+    title: string;
+    description: string;
+    backToApp: string;
+  };
+  configuracion: {
+    title: string;
+    subtitle: string;
+    changePassword: string;
+    newPassword: string;
+    confirmPassword: string;
+    submit: string;
+    submitting: string;
+    success: string;
+    mismatch: string;
+    tooShort: string;
+    genericError: string;
+    yourOrganizations: string;
   };
   roles: Record<MembershipRole, string>;
   etapas: Record<Etapa, string>;

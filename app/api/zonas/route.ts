@@ -1,14 +1,21 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getCurrentOrgId } from '@/lib/supabase/auth-server';
 
-// GET /api/zonas -> zonas guardadas con la cantidad de negocios encontrados en cada una
+// GET /api/zonas -> zonas de la org activa, con la cantidad de negocios encontrados en cada una
 export async function GET() {
   try {
+    const orgId = await getCurrentOrgId();
+    if (!orgId) {
+      return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
+    }
+
     const supabase = createServiceClient();
 
     const { data, error } = await supabase
       .from('zonas')
       .select('id, nombre, created_at, negocios(count)')
+      .eq('org_id', orgId)
       .order('created_at', { ascending: false });
 
     if (error) {

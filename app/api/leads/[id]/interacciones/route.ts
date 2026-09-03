@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getCurrentOrgId } from '@/lib/supabase/auth-server';
+import { getCurrentOrgId, getUser } from '@/lib/supabase/auth-server';
+import { crearNotificacion } from '@/lib/notifications';
 import type { TipoInteraccion } from '@/lib/types';
 
 const TIPOS_VALIDOS: TipoInteraccion[] = ['nota', 'llamada', 'mail', 'reunion', 'whatsapp'];
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     // el id de un lead ajeno con solo adivinarlo).
     const { data: lead, error: leadError } = await supabase
       .from('leads')
-      .select('id')
+      .select('id, negocio:negocios(nombre)')
       .eq('id', id)
       .eq('org_id', orgId)
       .single();
@@ -50,6 +51,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (error) {
       console.error(error);
       return NextResponse.json({ error: 'No se pudo registrar la interacción' }, { status: 500 });
+    }
+
+    const user = await getUser();
+    if (user) {
+      const negocioNombre = (lead.negocio as unknown as { nombre: string } | null)?.nombre;
+      await crearNotificacion(supabase, {
+        orgId,
+        actorId: user.id,
+        tipo: 'interaccion_agregada',
+        leadId: id,
+        detalle: { negocioNombre, tipoInteraccion: tipo },
+      });
     }
 
     return NextResponse.json({ interaccion: data }, { status: 201 });

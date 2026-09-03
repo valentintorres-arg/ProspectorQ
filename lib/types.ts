@@ -6,6 +6,7 @@ export interface OrgMembership {
   orgId: string;
   orgNombre: string;
   role: MembershipRole;
+  notificationsLastSeenAt: string;
 }
 
 export interface OrgMember {

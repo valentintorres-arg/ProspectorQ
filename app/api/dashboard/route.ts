@@ -17,7 +17,7 @@ export async function GET() {
     const supabase = createServiceClient();
 
     const [zonasRes, negociosRes, leadsRes, negociosRubroRes] = await Promise.all([
-      supabase.from('zonas').select('*', { count: 'exact', head: true }),
+      supabase.from('zonas').select('*', { count: 'exact', head: true }).eq('org_id', orgId),
       supabase.from('negocios').select('*', { count: 'exact', head: true }),
       supabase.from('leads').select('etapa').eq('org_id', orgId),
       supabase.from('negocios').select('rubro'),

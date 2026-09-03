@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getCurrentOrgId } from '@/lib/supabase/auth-server';
+import { getCurrentOrgId, getUser } from '@/lib/supabase/auth-server';
+import { crearNotificacion } from '@/lib/notifications';
 
 // GET /api/leads?etapa=contactado  -> lista leads (con el negocio embebido), filtrable por etapa
 export async function GET(req: NextRequest) {
@@ -48,6 +49,7 @@ export async function POST(req: NextRequest) {
     if (!orgId) {
       return NextResponse.json({ error: 'Organización no encontrada' }, { status: 403 });
     }
+    const user = await getUser();
 
     const body = await req.json();
 
@@ -68,6 +70,17 @@ export async function POST(req: NextRequest) {
       if (error) {
         console.error(error);
         return NextResponse.json({ error: 'No se pudieron crear los leads' }, { status: 500 });
+      }
+
+      // Una sola notificación agregada (no una por negocio) para no inundar
+      // el feed cuando alguien usa "agregar todos" desde el mapa.
+      if (user && data && data.length > 0) {
+        await crearNotificacion(supabase, {
+          orgId,
+          actorId: user.id,
+          tipo: 'lead_creado',
+          detalle: { count: data.length },
+        });
       }
 
       return NextResponse.json({ leads: data }, { status: 201 });
@@ -92,6 +105,16 @@ export async function POST(req: NextRequest) {
       }
       console.error(error);
       return NextResponse.json({ error: 'No se pudo crear el lead' }, { status: 500 });
+    }
+
+    if (user) {
+      await crearNotificacion(supabase, {
+        orgId,
+        actorId: user.id,
+        tipo: 'lead_creado',
+        leadId: data.id,
+        detalle: { negocioNombre: data.negocio?.nombre },
+      });
     }
 
     return NextResponse.json({ lead: data }, { status: 201 });
