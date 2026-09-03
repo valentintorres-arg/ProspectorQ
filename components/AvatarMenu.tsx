@@ -45,7 +45,7 @@ export default function AvatarMenu({ email }: { email: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-[0px_8px_24px_rgba(103,75,181,0.12)]">
+        <div className="absolute right-0 top-full z-[1100] mt-2 w-64 rounded-xl border border-outline-variant/20 bg-surface-container-lowest shadow-[0px_8px_24px_rgba(103,75,181,0.12)]">
           <div className="border-b border-outline-variant/10 px-4 py-3">
             <p className="min-w-0 truncate text-sm font-semibold text-on-surface" title={email}>
               {email}

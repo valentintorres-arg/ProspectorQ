@@ -21,7 +21,12 @@ export default function TopBar({ email }: { email: string }) {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-outline-variant/10 bg-surface/60 px-4 backdrop-blur-md md:px-6">
+    // relative + z-[1200]: backdrop-blur (filter) crea su propio stacking
+    // context, así que ningún z-index adentro (el dropdown de notificaciones
+    // o el del avatar) puede escaparlo para pintarse arriba del mapa — el
+    // mapa (components/MapCanvas.tsx) tiene overlays con z-[1000]. Hay que
+    // posicionar el header ENTERO por encima de eso, no solo sus hijos.
+    <header className="relative z-[1200] flex h-16 shrink-0 items-center justify-between border-b border-outline-variant/10 bg-surface/60 px-4 backdrop-blur-md md:px-6">
       <span className="font-headline text-lg font-semibold text-primary md:hidden">Prospector</span>
       <div className="hidden flex-1 md:block" />
 

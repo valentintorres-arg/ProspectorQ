@@ -1,5 +1,5 @@
 PROSPECTOR - PROXIMOS PASOS
-(actualizado 2026-08-31)
+(actualizado 2026-09-03)
 
 PENDIENTE INMEDIATO
 --------------------
@@ -18,7 +18,9 @@ PENDIENTE INMEDIATO
    Ninguna de las dos es un rediseño, son upgrades/cambios de proveedor
    a resolver antes de facturar, no después. (Esto no es asesoría legal,
    son los términos de servicio tal como están publicados - conviene
-   revisarlos directamente antes de decidir.)
+   revisarlos directamente antes de decidir. Ahora hay un motivo más
+   para resolverlo pronto: con multi-org ya andando, cobrar por
+   organización es un paso chico.)
 
 1. Logo del sidebar (components/Sidebar.tsx): hoy clickearlo solo
    colapsa/expande el menú (onToggleCollapse). Pedido: que además lleve
@@ -31,32 +33,18 @@ PENDIENTE INMEDIATO
      /dashboard (zonas buscadas, negocios encontrados, leads en
      pipeline), pero más simple/liviano - nada extravagante, la idea es
      dar un pantallazo del estado de la cuenta al entrar, no duplicar
-     el dashboard entero. Estos datos ya existen via GET /api/dashboard.
+     el dashboard entero. Estos datos ya existen via GET /api/dashboard
+     (ojo: zonasCount ahora es por-org desde el punto "Zonas por
+     organización" de abajo, ya no global).
    - Sumar más contenido al paso a paso actual (hoy son 4 cards con un
      título y una linea de descripción cada una - se pidió explícitamente
      "enriquecer", el instructivo actual quedó corto/vacío).
 
-3. Botones decorativos del TopBar (campana/notificaciones, chat, Upgrade,
-   avatar "V"): hoy no hacen nada — fue una decisión explícita en su
-   momento (ver YA RESUELTO 2026-08-30, "a pedido, para que calce
-   visualmente con los mockups de Stitch"). Ahora se pidió hacerlos
-   funcionar o agregarles funcionalidad real. Antes de implementar,
-   definir qué hace cada uno (no está especificado todavía):
-   - Campana: ¿centro de notificaciones real? ¿de qué eventos (nuevo
-     lead vencido, zona terminó de buscar, etc.)?
-   - Chat: ¿soporte, IA, o feedback?
-   - Upgrade: ¿hay un plan pago real o queda decorativo hasta que lo haya?
-     (Ver punto 0 - si esto termina siendo un plan pago real, el
-     upgrade de Vercel/tiles del punto 0 pasa a ser un prerequisito.)
-   - Avatar "V": candidato más obvio a resolver primero - menú de cuenta
-     (mail, cerrar sesión, ¿configuración?) - ya existe esa lógica en
-     Sidebar.tsx (handleLogout) para reusar.
-
-4. (Opcional) Google Places API para "Enriquecer con Google":
+3. (Opcional) Google Places API para "Enriquecer con Google":
    - Solo si querés completar telefono/web/rating de los negocios
    - Completar GOOGLE_MAPS_SERVER_API_KEY en .env.local (ver README)
 
-5. Detalle menor detectado al probar el dedup: cuando una re-busqueda
+4. Detalle menor detectado al probar el dedup: cuando una re-busqueda
    sobre una zona ya existente da como resultado que TODOS los negocios
    encontrados ya estaban guardados (deduplicados contra negocios de una
    busqueda anterior), la zona nueva que se crea queda con "0 negocios
@@ -68,6 +56,63 @@ PENDIENTE INMEDIATO
    en este caso puntual. No es un bug de datos, es un tema de que
    representa el numero. Si molesta, se puede arreglar sumando tambien
    los negocios "encontrados pero no nuevos" al conteo de esa zona.
+
+5. Sin UI para invitar a alguien que todavía no tiene cuenta vía mail
+   real: hoy una invitación (ver "Multi-organización" abajo) queda
+   pendiente hasta que esa persona entra a la app con esa cuenta - no se
+   manda ningún mail (no hay proveedor transaccional configurado). Si en
+   algún momento importa que la invitación "avise" de verdad, hay que
+   sumar un proveedor de mail y usar el envío nativo de invitación de
+   Supabase Auth para emails que todavía no tienen cuenta.
+
+6. Monitoreo (todavía no arrancado, queda documentado para hacerlo
+   después - con capa gratuita en los dos casos):
+   - Seguridad: correr Strix (escaneo/testing de seguridad) sobre el
+     proyecto antes de crecer el número de usuarios reales - sobre todo
+     ahora que hay multi-org con roles e invitaciones (más superficie
+     de ataque que antes: quién puede ver/tocar qué).
+   - Performance y errores: Grafana + Prometheus (tier gratis/self-host
+     o Grafana Cloud free) para tener métricas y alertas reales en vez
+     de enterarse de un problema porque un usuario escribe. Definir qué
+     se instrumenta primero (tiempos de respuesta de las API routes más
+     pesadas - /api/search-zone, /api/enrich - y tasa de errores 5xx).
+
+YA RESUELTO 2026-09-03
+------------------------
+- Multi-tenancy: leads e interacciones se aislaron por organización.
+  zonas y negocios eran (y en el caso de negocios siguen siendo)
+  catálogo compartido - decisión explícita para no duplicar llamadas a
+  Overpass/Overture/Google entre cuentas. Migración
+  0006_multi_tenant_orgs.sql: tabla organizations, org_id en
+  profiles/leads/interacciones, RLS actualizada, cada signup nuevo crea
+  su propia org via trigger.
+- Multi-organización real: un usuario puede pertenecer a varias
+  organizaciones (antes era 1 a 1), y una organización puede tener
+  varios usuarios, con roles owner/admin/member (el creador de la org
+  es owner, inamovible; admin puede invitar/sacar members pero no tocar
+  a otro admin ni al owner; solo el owner cambia roles). Selector de
+  organización activa en el sidebar (cookie active_org_id, solo visible
+  con 2+ orgs). Invitaciones dentro de la app (sin mail, ver punto 5 de
+  arriba) gestionadas desde /organizacion. Migración
+  0007_org_memberships_invitations.sql (tabla memberships many-to-many,
+  tabla invitations).
+- Zonas por organización: cada zona ahora pertenece a la org que la
+  buscó (antes era catálogo compartido como negocios). Migración
+  0008_zonas_org_scoped.sql.
+- Centro de notificaciones real (campana del TopBar, antes decorativa):
+  cubre actividad de leads dentro de tu org (crear, cambiar etapa,
+  editar, borrar, agregar interacción - de cualquier miembro, no solo
+  vos), leads con acción vencida (calculado al vuelo, no se guarda) e
+  invitaciones que te llegaron. Migración 0009_notifications.sql (tabla
+  notifications + notifications_last_seen_at por usuario-por-org en
+  memberships).
+- TopBar terminado (ver punto 3 de PENDIENTE INMEDIATO de la versión
+  anterior de este archivo, ya resuelto): chat sacado directamente (no
+  se reemplazó por nada), Upgrade linkea a /upgrade ("Próximamente" -
+  no hay plan pago real todavía, ver punto 0), avatar "V" abre un
+  dropdown (mail, org activa + rol, botón a /configuracion) en vez de
+  ser decorativo. /configuracion nueva: cambiar contraseña + listado de
+  tus organizaciones con tu rol en cada una.
 
 YA RESUELTO 2026-08-31
 ------------------------
