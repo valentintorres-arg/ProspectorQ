@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   // y falla resolviendo deps opcionales de @mapbox/node-pre-gyp que no
   // instalamos (aws-sdk, nock, etc.) porque nunca se usan en la práctica.
   serverExternalPackages: ['duckdb'],
+  // Salida standalone para imágenes Docker livianas (copia solo los
+  // archivos que next traza como necesarios en runtime).
+  output: 'standalone',
 };
 
 export default nextConfig;
